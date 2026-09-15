@@ -193,6 +193,20 @@
     padding: 2px 6px; font-size: 12.5px; color: var(--ink);
   }
   .qa-hint .det { font-family: var(--f-mono); font-size: 12px; color: var(--accent); }
+  .qa-hint .try-chip, .qa-hint .try-more {
+    border: 0; background: transparent; cursor: pointer; font-size: 12.5px;
+    padding: 0; border-bottom: 1px dashed var(--line); color: var(--ink-2);
+  }
+  .qa-hint .try-chip:hover, .qa-hint .try-more:hover { color: var(--accent-ink); border-bottom-color: var(--accent); }
+  .qa-hint .try-more { color: var(--ink-3); font-style: italic; border-bottom-style: dotted; }
+
+  .cheat-row { display: flex; gap: 10px 14px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+  .cheat-ex {
+    border: 0; background: var(--ground); color: var(--ink); cursor: pointer; text-align: left;
+    font-family: var(--f-mono); font-size: 12.5px; padding: 3px 8px; border-radius: 6px;
+  }
+  .cheat-ex:hover { background: var(--accent-soft); color: var(--accent-ink); }
+  .cheat-row .why { font-size: 12.5px; color: var(--ink-3); }
   .dupes { display: flex; flex-wrap: wrap; gap: 6px; padding: 7px 4px 0; font-size: 12.5px; color: var(--ink-3); align-items: center; }
   .dupes:empty { padding: 0; }
   .dupes button {
@@ -411,6 +425,12 @@
       <button type="submit" class="btn" id="import-go">Sort these out</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="cheats">
+  <div class="dlg-head"><h2>What you can type</h2><p>Tap any line to drop it in the box.</p></div>
+  <div class="dlg-body" id="cheats-body"></div>
+  <div class="dlg-foot"><button type="button" class="btn" data-close="cheats">Done</button></div>
 </dialog>
 
 <dialog id="settings">
@@ -1137,11 +1157,22 @@
       addBtn("chores", "+ Add"));
     html += block("Due now", due.length > 3 ? "Today shows the top 3" : null, listOf(due, choreRow), due.length > 5);
     html += block("Coming up", null, listOf(all.filter((c) => c._due > 0), choreRow));
-    if (!state.chores.length) {
-      html += '<div class="card" style="margin-top:20px"><h3>Start with the usual suspects</h3>' +
-        '<p style="margin:6px 0 12px">Tap any that apply. You can change how often later.</p><div class="chips">' +
-        CHORE_PRESETS.map((c, i) => '<button type="button" class="chip" data-act="preset-chore" data-i="' + i + '">' + esc(c[0]) +
-          ' <span class="k">' + esc(everyLabel(c[1])) + "</span></button>").join("") + "</div></div>";
+    // Suggestions don't vanish the moment you take one — they stay until
+    // they're all used up, minus whatever is already on the list.
+    const have = new Set(state.chores.map((c) => String(c.title || "").trim().toLowerCase()));
+    const left = CHORE_PRESETS.map((c, i) => ({ title: c[0], every: c[1], i: i }))
+      .filter((c) => !have.has(c.title.toLowerCase()));
+    if (left.length) {
+      const first = !state.chores.length;
+      html += '<div class="card" style="margin-top:22px"><h3>' +
+        (first ? "Start with the usual suspects" : "Anything else you keep forgetting?") + "</h3>" +
+        '<p style="margin:6px 0 12px">' +
+        (first ? "Tap any that apply. You can change how often later."
+               : "These stay here until you add them. Change how often any time.") +
+        '</p><div class="chips">' +
+        left.slice(0, 10).map((c) => '<button type="button" class="chip" data-act="preset-chore" data-i="' + c.i + '">' +
+          esc(c.title) + ' <span class="k">' + esc(everyLabel(c.every)) + "</span></button>").join("") +
+        "</div></div>";
     }
     return html;
   }
@@ -1201,10 +1232,74 @@
      Onboarding
      ===================================================================== */
   const CHORE_PRESETS = [["Laundry", 7], ["Change the sheets", 14], ["Water the plants", 4], ["Take out recycling", 7],
-    ["Clean the bathroom", 14], ["Vacuum", 7], ["Wipe down the kitchen", 3], ["Grocery run", 7]];
+    ["Clean the bathroom", 14], ["Vacuum", 7], ["Wipe down the kitchen", 3], ["Grocery run", 7],
+    ["Take out the trash", 3], ["Empty the dishwasher", 2], ["Mop the floors", 14], ["Dust", 14],
+    ["Clean the shower", 14], ["Clean out the fridge", 30], ["Wash the car", 30], ["Change the air filter", 90],
+    ["Water the plants outside", 7], ["Clean the litter box", 2], ["Sweep the entryway", 7], ["Deep clean the kitchen", 30]];
 
   const EXAMPLES = ["dentist tues 2pm", "razor heads", "schedule teeth cleaning", "buy crispy shallots",
     "chore: laundry every week", "keep in touch with Grandma every 2 weeks", "plan desk setup", "clean teeth myself?"];
+
+  // Two of them sit under the add box whenever it's empty, rotating each time
+  // the app opens, so there's always a way in and always something new to find.
+  const TRY_PICKS = (() => {
+    const order = EXAMPLES.map((_, i) => i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = order[i]; order[i] = order[j]; order[j] = t;
+    }
+    return order.slice(0, 2);
+  })();
+
+  const CHEATS = [
+    ["Appointments", [
+      ["dentist tues 2pm", "next Tuesday, 2:00 PM"],
+      ["lunch with Andrea", "no date yet, so it files as one to arrange"],
+      ["schedule teeth cleaning", "stays flagged until you book it"],
+    ]],
+    ["Shopping", [
+      ["buy crispy shallots", "Buy, groceries"],
+      ["razor heads", "Buy, pharmacy & care"],
+      ["hiking boots", "a want, no rush"],
+    ]],
+    ["Things to do", [
+      ["renew registration friday", "due Friday"],
+      ["change address", "no date, just on the list"],
+    ]],
+    ["Chores", [
+      ["chore: laundry every week", "comes back every 7 days"],
+      ["water the plants every 3 days", "any interval works"],
+    ]],
+    ["People", [
+      ["keep in touch with Grandma every 2 weeks", "nudges once it's been 14 days"],
+    ]],
+    ["Projects and ideas", [
+      ["plan desk setup", "a project"],
+      ["clean teeth myself?", "a question mark makes it an idea"],
+    ]],
+    ["Worth knowing", [
+      ["dentist tues 2pm @ Dr. Pham", "@ sets the place"],
+      ["want: new desk chair", "a prefix forces the list"],
+    ]],
+  ];
+
+  const CHEAT_NOTES = [
+    ["Dates", "today, tonight, tomorrow, tues, next friday, in 3 days, sep 20, 9/20, next week"],
+    ["Times", "2pm, 2:30pm, 14:00, noon"],
+    ["Repeats", "every week, every 3 days, every other week, daily, monthly"],
+    ["Pasting a list", "one thing per line \u2014 bullets, numbering and [ ] checkboxes are stripped, and a ticked box arrives already done"],
+  ];
+
+  function renderCheats() {
+    document.getElementById("cheats-body").innerHTML =
+      CHEATS.map(([group, rows]) =>
+        '<div class="settings-group"><h3>' + esc(group) + "</h3>" +
+        rows.map(([ex, why]) =>
+          '<div class="cheat-row"><button type="button" class="cheat-ex" data-act="try-text" data-text="' + esc(ex) + '">' +
+          esc(ex) + '</button><span class="why">' + esc(why) + "</span></div>").join("") + "</div>").join("") +
+      '<div class="settings-group"><h3>It understands</h3>' +
+      CHEAT_NOTES.map(([k, v]) => '<p><strong>' + esc(k) + ":</strong> " + esc(v) + "</p>").join("") + "</div>";
+  }
 
   function onboarding() {
     return '<div class="block" style="display:grid;gap:14px;margin-top:18px">' +
@@ -1275,7 +1370,14 @@
 
   function updateHint() {
     const raw = qaInput.value.trim();
-    if (!raw) { qaHint.innerHTML = ""; qaDupes.innerHTML = ""; return; }
+    if (!raw) {
+      qaHint.innerHTML = "<span>Try</span>" +
+        TRY_PICKS.map((i) => '<button type="button" class="try-chip" data-act="try" data-i="' + i + '">' +
+          esc(EXAMPLES[i]) + "</button>").join("") +
+        '<button type="button" class="try-more" data-act="cheats">what else?</button>';
+      qaDupes.innerHTML = "";
+      return;
+    }
     const p = parseQuick(raw);
     const kind = override || p.kind;
     const detail = describeParse(p, kind);
@@ -1587,6 +1689,15 @@
     if (act === "new") { openEditor(coll, null); return; }
     if (act === "del") { askDelete(coll, id); return; }
     if (act === "paste") { openImporter(""); return; }
+    if (act === "cheats") { renderCheats(); document.getElementById("cheats").showModal(); return; }
+    if (act === "try-text") {
+      qaInput.value = btn.dataset.text;
+      override = null;
+      document.getElementById("cheats").close();
+      updateHint();
+      qaInput.focus();
+      return;
+    }
     if (act === "file") {
       const item = find("inbox", id);
       if (!item) return;
