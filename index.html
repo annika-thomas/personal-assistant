@@ -81,9 +81,18 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
+  html, body {
+    height: 100%;
+    max-width: 100%;
+    /* clip rather than hidden: hidden would make these a scroll container and
+       kill position:sticky on the header. */
+    overflow-x: clip;
+  }
   body {
     margin: 0;
+    /* Vertical drags and pinch-zoom only — no sideways panning of the app. */
+    touch-action: pan-y pinch-zoom;
+    overscroll-behavior-x: none;
     background: var(--ground);
     color: var(--ink);
     font-family: var(--f-body);
@@ -134,16 +143,22 @@
   .rail-nav button[aria-current="true"] .pill { background: rgba(255,255,255,.5); color: var(--accent-ink); }
   .pill.hot { background: var(--alert-soft); color: var(--alert); }
 
+  /* Four across, two rows, every section on screen at once. A scrolling strip
+     here was the thing that let the whole app be dragged sideways. */
   .tabs {
-    display: flex; gap: 4px; overflow-x: auto; padding: 0 16px 10px;
-    border-bottom: 1px solid var(--line); scrollbar-width: none;
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px;
+    padding: 0 13px 7px; border-bottom: 1px solid var(--line);
   }
-  .tabs::-webkit-scrollbar { display: none; }
   .tabs button {
-    flex: 0 0 auto; border: 0; background: transparent; color: var(--ink-3);
-    padding: 6px 10px; border-radius: 20px; cursor: pointer; font-size: 14px; white-space: nowrap;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    min-width: 0; border: 0; background: transparent; color: var(--ink-3);
+    padding: 6px 3px; border-radius: 8px; cursor: pointer; font-size: 12.5px;
+    white-space: nowrap; overflow: hidden;
   }
+  .tabs button .lbl { overflow: hidden; text-overflow: ellipsis; }
+  .tabs button .pill { padding: 0 5px; font-size: 10.5px; }
   .tabs button[aria-current="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+  .tabs button[aria-current="true"] .pill { background: rgba(255,255,255,.55); color: var(--accent-ink); }
   @media (min-width: 900px) { .tabs { display: none; } }
 
   .main { min-width: 0; padding: 0 0 80px; }
@@ -155,15 +170,16 @@
     background: var(--ground);
     background: color-mix(in srgb, var(--ground) 93%, transparent);
     backdrop-filter: blur(8px);
-    padding-top: 12px;
+    padding-top: 6px;
   }
-  .toprow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+  .brandrow { padding-top: 10px; }
+  .toprow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 7px; }
   .toprow .wordmark { font-size: 17px; }
   @media (min-width: 900px) { .toprow .wordmark { display: none; } .toprow { justify-content: flex-end; } }
   .toptools { display: flex; gap: 2px; }
 
   /* ---------- quick add ---------- */
-  .qa { padding-bottom: 12px; }
+  .qa { padding-bottom: 9px; }
   .qa-field {
     display: flex; align-items: center; gap: 8px; background: var(--surface);
     border: 1px solid var(--line); border-radius: 11px; padding: 4px 4px 4px 13px; box-shadow: var(--shadow);
@@ -185,9 +201,13 @@
 
   .qa-hint {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    padding: 8px 4px 0; font-size: 13px; color: var(--ink-2);
+    padding: 7px 4px 0; font-size: 13px; color: var(--ink-2);
   }
   .qa-hint:empty { padding: 0; }
+  /* One example on a phone, two where there's room — either way, one line. */
+  @media (max-width: 560px) {
+    .qa-hint .try-chip:nth-of-type(2) { display: none; }
+  }
   .qa-hint select {
     background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
     padding: 2px 6px; font-size: 12.5px; color: var(--ink);
@@ -225,11 +245,11 @@
   /* ---------- blocks ---------- */
   .block { margin-top: 26px; }
   .block-head {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap;
     padding-bottom: 9px; margin-bottom: 10px; border-bottom: 1px solid var(--line);
   }
   .block-head h2 { font-size: 15px; font-family: var(--f-body); font-weight: 600; letter-spacing: 0; }
-  .block-head .meta { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-3); text-align: right; }
+  .block-head .meta { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-3); text-align: right; min-width: 0; }
   .block-head.alert { border-bottom-color: var(--alert); }
   .block-head.alert h2 { color: var(--alert); }
 
@@ -239,6 +259,7 @@
   .row.flag { background: var(--alert-soft); }
   .row-body { flex: 1; min-width: 0; }
   .row-title { font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+  .row-sub, .card p, .clear p, .banner, .block-head h2, .cheat-row .why { overflow-wrap: anywhere; }
   .row.done .row-title { color: var(--ink-3); text-decoration: line-through; }
   .row-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
   .row-sub .when { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
@@ -328,15 +349,15 @@
     border: 1px solid var(--line); background: var(--ground); border-radius: 8px; padding: 8px 10px; font-size: 15px; width: 100%;
   }
   .field textarea { resize: vertical; min-height: 150px; font-family: inherit; line-height: 1.55; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 12px; }
 
   .imp { display: flex; flex-direction: column; gap: 2px; }
-  .imp-line { display: flex; align-items: center; gap: 9px; padding: 5px 6px; border-radius: 7px; cursor: pointer; }
+  .imp-line { display: flex; align-items: center; gap: 6px 9px; padding: 5px 6px; border-radius: 7px; cursor: pointer; flex-wrap: wrap; }
   .imp-line:hover { background: var(--ground); }
   .imp-line input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex: 0 0 auto; margin: 0; }
   .imp-line .t { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
   .imp-line.off .t { opacity: .4; text-decoration: line-through; }
-  .imp-line select { flex: 0 0 auto; width: 116px; font-size: 12.5px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); }
+  .imp-line select { flex: 0 0 auto; width: 112px; max-width: 100%; font-size: 12.5px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); }
 
   .settings-group { display: grid; gap: 7px; padding-bottom: 14px; border-bottom: 1px solid var(--line-soft); }
   .settings-group:last-child { border-bottom: 0; padding-bottom: 0; }
@@ -369,9 +390,8 @@
   </aside>
 
   <main class="main">
-    <div class="topbar">
-      <div class="wrap">
-        <div class="toprow">
+    <div class="wrap brandrow">
+      <div class="toprow">
           <span class="wordmark">Off My Plate<span>.</span></span>
           <div class="toptools">
             <button class="icon-btn" id="btn-find" type="button" aria-label="Search everything" title="Search">
@@ -384,7 +404,10 @@
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="2.4" stroke="currentColor" stroke-width="1.5"/><path d="M9 1.9v1.7M9 14.4v1.7M16.1 9h-1.7M3.6 9H1.9m11.1-5-1.2 1.2M6.1 11.9 4.9 13.1m8.2 0-1.2-1.2M6.1 6.1 4.9 4.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </button>
           </div>
-        </div>
+      </div>
+    </div>
+    <div class="topbar">
+      <div class="wrap">
         <form class="qa" id="qa-form" autocomplete="off">
           <div class="qa-field">
             <input id="qa-input" type="text" placeholder="Anything you just remembered…" aria-label="Add anything">
@@ -1078,8 +1101,9 @@
     }).join("");
     document.getElementById("tabs").innerHTML = NAV.map(([k, label]) => {
       const c = counts[k];
-      return '<button type="button" data-act="nav" data-view="' + k + '" aria-current="' + (view === k) + '">' + esc(label) +
-        (c && c.n ? " " + c.n : "") + "</button>";
+      return '<button type="button" data-act="nav" data-view="' + k + '" aria-current="' + (view === k) + '">' +
+        '<span class="lbl">' + esc(label) + "</span>" +
+        (c && c.n ? '<span class="pill' + (c.hot ? " hot" : "") + '">' + c.n + "</span>" : "") + "</button>";
     }).join("");
   }
 
@@ -1321,7 +1345,7 @@
   // Two of them sit under the add box whenever it's empty, rotating each time
   // the app opens, so there's always a way in and always something new to find.
   const TRY_PICKS = (() => {
-    const order = EXAMPLES.map((_, i) => i);
+    const order = EXAMPLES.map((_, i) => i).filter((i) => EXAMPLES[i].length <= 26);
     for (let i = order.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       const t = order[i]; order[i] = order[j]; order[j] = t;

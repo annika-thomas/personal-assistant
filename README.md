@@ -109,6 +109,20 @@ matter how many are due, with a note saying how many are waiting. Tasks cap at
 six, people at two, stalled projects at one. Long lists are one tap away when
 you want them; the home screen never becomes a wall.
 
+## Layout
+
+The page scrolls one way only. `touch-action: pan-y pinch-zoom` on the body
+rules out sideways drags, `overflow-x: clip` on the root catches anything that
+would otherwise widen the page (`clip` rather than `hidden`, which would make
+them a scroll container and break the sticky header), and long unbroken words
+wrap rather than push.
+
+On a phone the eight sections sit in a 4×2 grid rather than a scrolling strip —
+a scrollable row under the input was what let the whole app be dragged
+sideways. Pinned to the top are the add box and that grid, about 20% of the
+screen; the wordmark and the search, paste and settings icons scroll away with
+the content.
+
 ## Files
 
 | | |
