@@ -493,6 +493,29 @@
     }
   }
 
+  // Items imported before checkboxes were understood still carry "[ ]" and
+  // "[x]" in their titles. Tidy them in place, once, and honour the tick.
+  function tidyImported() {
+    let fixed = 0;
+    for (const coll of COLLS) {
+      for (const d of state[coll]) {
+        const key = d.name !== undefined ? "name" : "title";
+        const cleaned = stripMarker(d[key]);
+        if (!cleaned.text || cleaned.text === d[key]) continue;
+        d[key] = cleaned.text;
+        if (cleaned.done) {
+          if (coll === "chores") { if (!d.lastDone) d.lastDone = today(); }
+          else if (coll === "people") { if (!d.lastContact) d.lastContact = today(); }
+          else if (coll === "projects") d.status = "done";
+          else if (coll !== "inbox") d.done = true;
+        }
+        fixed++;
+      }
+    }
+    if (fixed) save();
+    return fixed;
+  }
+
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const find = (coll, id) => state[coll].find((d) => d.id === id);
 
@@ -583,13 +606,38 @@
   };
 
   // Verbs that mean "an action I have to take", not "a thing I need to own".
-  const DO_VERBS = /^(change|send|return|cancel|renew|fix|repair|finish|write|pay|email|text|message|sign|submit|file|print|mail|post|reply|respond|update|clean|wash|tidy|organi[sz]e|sort|donate|toss|throw out|unsubscribe|confirm|register|apply|drop off|collect|move|hang|install|charge|back up|ask|tell|remind|find|look up|research|compare|measure|water|feed|empty|refill|defrost|swap|cut|trim|shave|wax|call)\b/i;
+  const DO_VERBS = /^(change|send|return|cancel|renew|fix|repair|finish|write|pay|email|text|message|sign|submit|file|print|mail|post|reply|respond|update|clean|wash|tidy|organi[sz]e|sort|donate|toss|throw out|unsubscribe|confirm|register|apply|drop off|collect|move|hang|install|charge|back up|ask|tell|remind|find|look up|research|compare|measure|water|feed|empty|refill|defrost|swap|cut|trim|shave|wax|call|put|take|bring|download|upload|scan|replace|deposit|transfer|claim|sell|ship|wrap|join|start|stop|delete|archive|reschedule|rsvp|follow up|set up|pack|turn in|hand in)\b/i;
   const BUY_VERBS = /^(buy|get|grab|order|purchase|restock|need|out of|reorder|new)\b/i;
   const IDEA_STARTS = /^(make my own|learn to|learn how|try |figure out|look into|maybe |what about|could i|should i|would be nice|idea)/i;
+  // Narrow enough to trust without a date attached: "Lunch with Andrea" is
+  // something to arrange, while "cleaning supplies" is shopping.
+  const APPT_NOUNS = /\b(appointment|appt|dentist|dental|doctor|dr\.?|haircut|vet|therapy|therapist|checkup|check-?up|physical|optometrist|dermatologist|interview|lunch with|dinner with|coffee with|drinks with|meeting with)\b/;
   const APPT_WORDS = /\b(appointment|appt|dentist|dental|doctor|dr\.?|haircut|vet|therapy|therapist|checkup|check-?up|physical|exam|optometrist|dermatologist|cleaning|meeting|lunch with|dinner with|coffee with|drinks with|flight|train|interview|class|closing|inspection|consult)\b/;
 
+  // Strip whatever a notes app put in front of the line — a bullet, a number,
+  // a "[ ]" checkbox — and report whether the box was ticked. This has to run
+  // before anything else reads the line, or "[x] Book flights" never sees the
+  // word "book". Returns the text normalized: single spaces, capital first.
+  function stripMarker(raw) {
+    let out = String(raw == null ? "" : raw).replace(/^[\s\u00a0]+/, "");
+    let done = false;
+    for (let guard = 0; guard < 6; guard++) {
+      let m = /^\[\s*([xX\u2713\u2714\u2611])?\s*\]\s*/.exec(out);
+      if (m) { if (m[1]) done = true; out = out.slice(m[0].length); continue; }
+      m = /^[\u2611\u2612\u2713\u2714]\s+/.exec(out);
+      if (m) { done = true; out = out.slice(m[0].length); continue; }
+      m = /^(?:[-*\u2022\u2023\u00b7\u2013\u2014\u25a1\u2610\u25aa\u25cf]|\d+[.)])\s+/.exec(out);
+      if (m) { out = out.slice(m[0].length); continue; }
+      break;
+    }
+    out = out.replace(/[\s\u00a0]+/g, " ").trim();
+    if (out) out = out[0].toUpperCase() + out.slice(1);
+    return { text: out, done: done };
+  }
+
   function parseQuick(raw) {
-    let text = " " + String(raw).trim().replace(/\s+/g, " ") + " ";
+    const marked = stripMarker(raw);
+    let text = " " + marked.text + " ";
     let kind = null, sure = true, date = null, time = null, everyDays = null,
       cadenceDays = null, status = "booked", where = "", want = false;
     const eat = (re) => { const m = re.exec(text); if (m) text = text.replace(m[0], " "); return m; };
@@ -658,7 +706,7 @@
     // 7. clean the title up. A dangling "on"/"at" only needs removing when a
     //    date or time was lifted out of the line; otherwise every word stays,
     //    or "On cloud shoes" loses its brand.
-    let title = text.replace(/^\s*(?:[-*•‣·–—]|\d+[.)])\s*/, " ");
+    let title = text;
     if (date || time) {
       title = title
         .replace(/\s+(on|at|by|this|the|for|to)\s*$/i, " ")
@@ -678,6 +726,7 @@
       else if (/^plan\b/i.test(title)) kind = "projects";
       else if (time || (date && APPT_WORDS.test(low))) kind = "appointments";
       else if (date) kind = "tasks";
+      else if (APPT_NOUNS.test(low)) { kind = "appointments"; status = "to_book"; }
       else if (BUY_VERBS.test(title)) kind = "buy";
       else if (DO_VERBS.test(title)) kind = "tasks";
       else if (KW.want.test(low)) { kind = "buy"; want = true; }
@@ -688,6 +737,8 @@
         kind = "inbox";
         sure = false;
       }
+      // Something already ticked off isn't waiting to be sorted.
+      if (marked.done && kind === "inbox") { kind = "tasks"; sure = true; }
     }
 
     if (kind === "buy") {
@@ -703,7 +754,7 @@
 
     return {
       kind: kind, sure: sure, title: title, date: date, time: time, everyDays: everyDays,
-      cadenceDays: cadenceDays, status: status, where: where, want: want,
+      cadenceDays: cadenceDays, status: status, where: where, want: want, done: marked.done,
       suggest: kind === "inbox" ? (words <= 4 ? "buy" : "tasks") : null,
     };
   }
@@ -727,23 +778,23 @@
   function docFromParse(p) {
     switch (p.kind) {
       case "inbox": return { title: p.title, suggest: p.suggest || "buy" };
-      case "appointments": return { title: p.title, status: p.status, date: p.date || null, time: p.time || null, where: p.where || "", notes: "", done: false };
-      case "tasks": return { title: p.title, due: p.date || null, notes: "", done: false };
-      case "buy": return { title: p.title, category: buyCategory(p.title), want: !!p.want, notes: "", done: false };
-      case "chores": return { title: p.title, everyDays: p.everyDays || 7, lastDone: null, notes: "" };
-      case "people": return { name: p.title, cadenceDays: p.cadenceDays || 14, lastContact: null, note: "" };
-      default: return { title: p.title, nextStep: "", status: p.status === "someday" ? "someday" : "active", lastTouched: today(), notes: "" };
+      case "appointments": return { title: p.title, status: p.status, date: p.date || null, time: p.time || null, where: p.where || "", notes: "", done: !!p.done };
+      case "tasks": return { title: p.title, due: p.date || null, notes: "", done: !!p.done };
+      case "buy": return { title: p.title, category: buyCategory(p.title), want: !!p.want, notes: "", done: !!p.done };
+      case "chores": return { title: p.title, everyDays: p.everyDays || 7, lastDone: p.done ? today() : null, notes: "" };
+      case "people": return { name: p.title, cadenceDays: p.cadenceDays || 14, lastContact: p.done ? today() : null, note: "" };
+      default: return { title: p.title, nextStep: "", status: p.done ? "done" : (p.status === "someday" ? "someday" : "active"), lastTouched: today(), notes: "" };
     }
   }
 
   // Put something from the Inbox (or an import line) into a real list.
-  function fileAs(dest, title) {
-    if (dest === "want") return create("buy", { title: title, category: buyCategory(title), want: true, notes: "", done: false });
-    if (dest === "buy") return create("buy", { title: title, category: buyCategory(title), want: false, notes: "", done: false });
-    if (dest === "tasks") return create("tasks", { title: title, due: null, notes: "", done: false });
-    if (dest === "appointments") return create("appointments", { title: title, status: "to_book", date: null, time: null, where: "", notes: "", done: false });
+  function fileAs(dest, title, done) {
+    if (dest === "want") return create("buy", { title: title, category: buyCategory(title), want: true, notes: "", done: !!done });
+    if (dest === "buy") return create("buy", { title: title, category: buyCategory(title), want: false, notes: "", done: !!done });
+    if (dest === "tasks") return create("tasks", { title: title, due: null, notes: "", done: !!done });
+    if (dest === "appointments") return create("appointments", { title: title, status: "to_book", date: null, time: null, where: "", notes: "", done: !!done });
     if (dest === "chores") return create("chores", { title: title, everyDays: 7, lastDone: today(), notes: "" });
-    if (dest === "projects") return create("projects", { title: title, nextStep: "", status: "active", lastTouched: today(), notes: "" });
+    if (dest === "projects") return create("projects", { title: title, nextStep: "", status: done ? "done" : "active", lastTouched: today(), notes: "" });
     if (dest === "people") return create("people", { name: title, cadenceDays: 14, lastContact: null, note: "" });
     return create("inbox", { title: title, suggest: "buy" });
   }
@@ -1310,7 +1361,7 @@
     impBody.innerHTML = '<p style="font-size:13px;color:var(--ink-2)">' + esc(summary) + '</p><div class="imp">' +
       impLines.map((l, i) =>
         '<label class="imp-line" for="imp-' + i + '"><input type="checkbox" id="imp-' + i + '" data-imp="' + i + '" checked>' +
-        '<span class="t">' + esc(l.title) + "</span>" +
+        '<span class="t">' + esc(l.title) + (l.parse.done ? ' <span class="tag">done</span>' : "") + "</span>" +
         '<select data-impdest="' + i + '" aria-label="Where this goes">' +
         opts.map(([v, lab]) => '<option value="' + v + '"' + (v === l.dest ? " selected" : "") + ">" + esc(lab) + "</option>").join("") +
         "</select></label>").join("") + "</div>";
@@ -1346,7 +1397,7 @@
       // Keep the parsed detail (dates, cadence) when the destination is the
       // one the parser picked; otherwise file it plainly under the override.
       if (l.dest === l.parse.kind && l.dest !== "inbox") create(l.dest, docFromParse(l.parse));
-      else fileAs(l.dest, l.title);
+      else fileAs(l.dest, l.title, l.parse.done);
     }
     impDlg.close();
     impLines = null;
@@ -1682,8 +1733,12 @@
   })();
 
   load();
+  const tidied = tidyImported();
   render();
   updateHint();
+  if (tidied) {
+    toast("Tidied " + tidied + " items that came in with checkboxes");
+  }
 
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     window.addEventListener("load", () => {
