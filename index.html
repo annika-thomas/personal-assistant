@@ -450,6 +450,15 @@
   </form>
 </dialog>
 
+<dialog id="snoozer">
+  <div class="dlg-head"><h2>Not today</h2><p id="snooze-what"></p></div>
+  <div class="dlg-body"><div class="chips" id="snooze-opts"></div></div>
+  <div class="dlg-foot">
+    <button type="button" class="btn btn-ghost btn-sm spacer" id="snooze-clear">Bring it back now</button>
+    <button type="button" class="btn btn-ghost" data-close="snoozer">Cancel</button>
+  </div>
+</dialog>
+
 <dialog id="cheats">
   <div class="dlg-head"><h2>What you can type</h2><p>Tap any line to drop it in the box.</p></div>
   <div class="dlg-body" id="cheats-body"></div>
@@ -475,6 +484,27 @@
         <button type="button" class="btn btn-ghost btn-sm" id="btn-import-file">Open a backup</button>
         <input type="file" id="file-input" accept="application/json,.json" hidden>
       </div>
+    </div>
+    <div class="settings-group">
+      <h3>Send it to your calendar</h3>
+      <p>A web page can't buzz your phone, but your calendar can. This writes every
+        upcoming appointment, every "ring them to book" date and every birthday to a
+        file your calendar app will take, alarms included.</p>
+      <div class="chips">
+        <button type="button" class="btn btn-ghost btn-sm" data-act="ics-all">Export everything dated</button>
+      </div>
+      <p>There's a calendar icon on individual appointments too. Re-export any time —
+        the entries replace themselves rather than piling up.</p>
+    </div>
+    <div class="settings-group">
+      <h3>Add things by voice</h3>
+      <p>Open this address with your text on the end and it gets filed on the spot.
+        Make an iOS Shortcut — Text, then Open URL — and you can say "add to Off My
+        Plate" to Siri without unlocking anything.</p>
+      <div class="chips">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-copy-url">Copy the address</button>
+      </div>
+      <p><code id="add-url" style="font-family:var(--f-mono);font-size:12px;word-break:break-all"></code></p>
     </div>
     <div class="settings-group">
       <h3>Keep it on your home screen</h3>
@@ -504,7 +534,7 @@
 
   const BUY_CATEGORIES = [
     ["groceries", "Groceries"], ["household", "Household"],
-    ["care", "Pharmacy & care"], ["pet", "For the pet"], ["other", "Other"],
+    ["care", "Pharmacy & care"], ["pet", "For the pet"], ["gifts", "Gifts"], ["other", "Other"],
   ];
   // A recurring appointment is driven by when the last one happened, not by a
   // fixed calendar date: the nudge is to BOOK it, which has to land early
@@ -564,6 +594,107 @@
     }
     if (fixed) save();
     return fixed;
+  }
+
+  /* ---------------------------------------------------------------------
+     Calendar handoff. A static page can't push a notification, but the phone
+     already carries something that can. So hand it an .ics: the appointment
+     itself, and separately the day to ring and book it.
+     --------------------------------------------------------------------- */
+  const icsEscape = (t) => String(t == null ? "" : t)
+    .replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+
+  // RFC 5545 caps a line at 75 octets; continuations start with a space.
+  function icsFold(line) {
+    if (line.length <= 72) return line;
+    const out = [];
+    let i = 0;
+    while (i < line.length) {
+      const take = i ? 71 : 72;
+      out.push((i ? " " : "") + line.slice(i, i + take));
+      i += take;
+    }
+    return out.join("\r\n");
+  }
+  const pad2 = (x) => String(x).padStart(2, "0");
+  function icsStamp(d) {
+    return d.getUTCFullYear() + pad2(d.getUTCMonth() + 1) + pad2(d.getUTCDate()) + "T" +
+      pad2(d.getUTCHours()) + pad2(d.getUTCMinutes()) + pad2(d.getUTCSeconds()) + "Z";
+  }
+  const icsDay = (s) => String(s).replace(/-/g, "");
+  // Floating local time: no timezone, so it means the same clock time wherever.
+  function icsLocal(dateStr, timeStr, addMins) {
+    const t = String(timeStr).split(":").map(Number);
+    const d = fromISO(dateStr);
+    d.setHours(t[0], t[1] + (addMins || 0), 0, 0);
+    return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + "T" +
+      pad2(d.getHours()) + pad2(d.getMinutes()) + "00";
+  }
+
+  function icsEvent(o) {
+    const out = ["BEGIN:VEVENT", "UID:" + o.uid, "DTSTAMP:" + icsStamp(new Date())];
+    if (o.time) {
+      out.push("DTSTART:" + icsLocal(o.date, o.time));
+      out.push("DTEND:" + icsLocal(o.date, o.time, o.minutes || 60));
+    } else {
+      out.push("DTSTART;VALUE=DATE:" + icsDay(o.date));
+      out.push("DTEND;VALUE=DATE:" + icsDay(shift(o.date, 1)));
+    }
+    if (o.yearly) out.push("RRULE:FREQ=YEARLY");
+    out.push("SUMMARY:" + icsEscape(o.title));
+    if (o.where) out.push("LOCATION:" + icsEscape(o.where));
+    if (o.notes) out.push("DESCRIPTION:" + icsEscape(o.notes));
+    for (const trigger of o.alarms || []) {
+      out.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsEscape(o.title),
+        "TRIGGER:" + trigger, "END:VALARM");
+    }
+    out.push("END:VEVENT");
+    return out;
+  }
+
+  function saveICS(name, events) {
+    if (!events.length) { toast("Nothing with a date to send across."); return; }
+    const text = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Off My Plate//EN",
+      "CALSCALE:GREGORIAN", "METHOD:PUBLISH"].concat(events, ["END:VCALENDAR"])
+      .map(icsFold).join("\r\n") + "\r\n";
+    const url = URL.createObjectURL(new Blob([text], { type: "text/calendar;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name + ".ics";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  // An appointment can produce two events: the thing itself, and the nudge to
+  // ring and book it. On an all-day event the alarm offsets are from midnight,
+  // so -PT15H is 9am the day before and PT9H is 9am on the day.
+  function apptEvents(a) {
+    let out = [];
+    if (a.date && !a.done && a.date >= today()) {
+      out = out.concat(icsEvent({
+        uid: "appt-" + a.id + "@offmyplate", title: a.title, date: a.date, time: a.time,
+        where: a.where, notes: a.notes,
+        alarms: a.time ? ["-P1D", "-PT2H"] : ["-PT15H"],
+      }));
+    }
+    if (a.status === "to_book" && !a.done) {
+      // A one-off with nothing booked has no lead date to work from — it is
+      // already on the list, so the reminder is for today.
+      const from = apptBookFrom(a) || today();
+      const due = apptNextDue(a);
+      if (from) {
+        out = out.concat(icsEvent({
+          uid: "book-" + a.id + "@offmyplate",
+          title: "Ring to book: " + a.title,
+          date: from > today() ? from : today(),
+          notes: due ? "Due around " + fmtDay(due, true) + "." : "",
+          alarms: ["PT9H"],
+        }));
+      }
+    }
+    return out;
   }
 
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -652,6 +783,7 @@
     household: /\b(paper towels?|toilet paper|napkins?|detergent|dish soap|soap|sponges?|batteries|light ?bulbs?|bulbs?|trash bags?|bin bags?|cleaner|bleach|filters?|wd ?-?40|tape|glue|screws?|nails|hooks?|command strips|candles?|matches|foil|cling film|ziplocs?|mop|broom|extension cord|charger|cable|adapter)\b/,
     care: /\b(band-?aids?|bandaids?|plasters?|lotion|moisturi[sz]er|sunscreen|spf|vitamins?|supplements?|ibuprofen|advil|tylenol|paracetamol|melatonin|floss|mouthwash|toothpaste|toothbrush|deodorant|razors?|razor heads?|shaving|shampoo|conditioner|benzoyl|peroxide|retinol|serum|tampons?|contacts?|contact solution|chapstick|lip balm|q-?tips|tissues?|hair ?ties?|face wash|body wash)\b/,
     pet: /\b(cat food|dog food|pet food|litter|kibble|catnip|leash|collar|flea)\b/,
+    gifts: /\b(gift|present|birthday|anniversary|wedding|card for|christmas|hanukkah|stocking)\b/,
     want: /\b(shoes?|boots?|sneakers?|trainers?|sandals?|jacket|coat|sweater|jeans|dress|backpack|purse|wallet|watch|headphones?|earbuds|airpods|speakers?|monitor|keyboard|desk|chair|stool|lamp|rug|curtains?|blinds?|mirror|backlights?|rack|shelf|shelves|dresser|mattress|bed frame|luggage|suitcase|camera|lens|bike|skis|snowboard|tent|sleeping bag|kayak|blender|air ?fryer|kettle|espresso|feeders?|frame|poster|plant stand|planter|weights?|yoga mat|projector)\b/,
   };
 
@@ -834,6 +966,7 @@
 
   function buyCategory(title) {
     const t = " " + String(title).toLowerCase() + " ";
+    if (KW.gifts.test(t)) return "gifts";
     if (KW.pet.test(t)) return "pet";
     if (KW.care.test(t)) return "care";
     if (KW.household.test(t)) return "household";
@@ -899,6 +1032,31 @@
   }
   const repeatLabel = (n) => (REPEATS.find((r) => r[0] === n) || [0, "every " + everyLabel(n)])[1].toLowerCase();
 
+  // Birthdays repeat on a fixed calendar date, so the year is just bookkeeping.
+  // The lead time is the point: it's no use hearing about it on the day.
+  function nextBirthday(p) {
+    if (!p.birthday) return null;
+    const parts = String(p.birthday).split("-").map(Number);
+    if (parts.length < 3 || !parts[1] || !parts[2]) return null;
+    const year = fromISO(today()).getFullYear();
+    let d = iso(new Date(year, parts[1] - 1, parts[2]));
+    if (d < today()) d = iso(new Date(year + 1, parts[1] - 1, parts[2]));
+    return d;
+  }
+  function birthdayIn(p) {
+    const d = nextBirthday(p);
+    return d === null ? null : daysFromToday(d);
+  }
+  function birthdayLooming(p) {
+    const days = birthdayIn(p);
+    return days !== null && days <= (p.birthdayLead || 14);
+  }
+
+  // Deferring is not deleting. A snoozed item keeps its real due date and
+  // simply stops shouting until the day you named.
+  const isSnoozed = (d) => !!(d && d.snoozedUntil && d.snoozedUntil > today());
+  const notSnoozed = (d) => !isSnoozed(d);
+
   const choreDue = (c) => (daysSince(c.lastDone) === null ? 0 : (c.everyDays || 7) - daysSince(c.lastDone));
   const personDue = (p) => (daysSince(p.lastContact) === null ? 0 : (p.cadenceDays || 14) - daysSince(p.lastContact));
   const projectStale = (p) => (daysSince(p.lastTouched) === null ? 999 : daysSince(p.lastTouched));
@@ -916,13 +1074,18 @@
       week: appts.filter((a) => a.date > t && a.date <= shift(t, 7)).sort(byDateTime),
       later: appts.filter((a) => a.date > shift(t, 7)).sort(byDateTime),
       missed: appts.filter((a) => a.date < t).sort(byDateTime),
-      toBook: state.appointments.filter((a) => a.status === "to_book" && !a.done && apptBookable(a))
+      toBook: state.appointments.filter((a) => a.status === "to_book" && !a.done && apptBookable(a) && notSnoozed(a))
         .sort((x, y) => String(apptNextDue(x) || "0000").localeCompare(String(apptNextDue(y) || "0000"))),
       waiting: state.appointments.filter((a) => a.status === "to_book" && !a.done && !apptBookable(a))
         .sort((x, y) => String(apptBookFrom(x)).localeCompare(String(apptBookFrom(y)))),
-      dueTasks: state.tasks.filter((x) => !x.done && x.due && x.due <= t).sort((a, b) => String(a.due).localeCompare(String(b.due))),
-      chores: state.chores.map((c) => Object.assign({ _due: choreDue(c) }, c)).filter((c) => c._due <= 0).sort((a, b) => a._due - b._due),
-      people: state.people.map((p) => Object.assign({ _due: personDue(p) }, p)).filter((p) => p._due <= 0).sort((a, b) => a._due - b._due),
+      dueTasks: state.tasks.filter((x) => !x.done && x.due && x.due <= t).filter(notSnoozed)
+        .sort((a, b) => String(a.due).localeCompare(String(b.due))),
+      chores: state.chores.filter(notSnoozed).map((c) => Object.assign({ _due: choreDue(c) }, c))
+        .filter((c) => c._due <= 0).sort((a, b) => a._due - b._due),
+      people: state.people.filter(notSnoozed).map((p) => Object.assign({ _due: personDue(p) }, p))
+        .filter((p) => p._due <= 0).sort((a, b) => a._due - b._due),
+      birthdays: state.people.filter(birthdayLooming)
+        .sort((a, b) => birthdayIn(a) - birthdayIn(b)),
       stalled: state.projects.filter((p) => (p.status || "active") === "active" && projectStale(p) >= 14).sort((a, b) => projectStale(b) - projectStale(a)),
     };
   }
@@ -939,6 +1102,7 @@
   }
   const TICK = '<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1.5 6.3 4.4 9.2 10.5 2.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const PENCIL = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3a1.6 1.6 0 0 1 2.3 2.3l-7.4 7.4-3 .7.7-3 7.4-7.4Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+  const CAL = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.3" y="3.4" width="11.4" height="10.3" rx="1.8" stroke="currentColor" stroke-width="1.3"/><path d="M2.3 6.6h11.4M5.6 2.3v2.2M10.4 2.3v2.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
   const TRASH = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5 5 13h6l.5-8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function checkBtn(coll, id, on, square) {
@@ -948,6 +1112,14 @@
   function doBtn(act, id, label) {
     return '<button type="button" class="check" data-act="' + act + '" data-id="' + id + '" aria-pressed="false" aria-label="' + esc(label) + '">' + TICK + "</button>";
   }
+  const ZZZ = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.6a5.4 5.4 0 1 0 5.4 5.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M8 5.1V8l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 1.6h3l-3 3h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const snoozeBtn = (coll, id) => '<button type="button" class="icon-btn" data-act="snooze" data-coll="' + coll +
+    '" data-id="' + id + '" aria-label="Put this off" title="Not today">' + ZZZ + "</button>";
+  const snoozeTag = (d) => (isSnoozed(d) ? '<span class="tag">back ' + esc(fmtDay(d.snoozedUntil)) + "</span>" : "");
+
+  const calBtn = (id) => '<button type="button" class="icon-btn" data-act="ics" data-id="' + id +
+    '" aria-label="Add to my calendar" title="Add to my calendar">' + CAL + "</button>";
+
   function rowActions(coll, id, extra) {
     return '<div class="row-actions">' + (extra || "") +
       '<button type="button" class="icon-btn" data-act="edit" data-coll="' + coll + '" data-id="' + id + '" aria-label="Edit">' + PENCIL + "</button>" +
@@ -983,10 +1155,10 @@
     if (a.date && a.date < today() && !a.done) bits.push('<span class="late">passed</span>');
     if (a.notes) bits.push(esc(a.notes));
     return row({ title: a.title, done: !!a.done, flag: flag, lead: checkBtn("appointments", a.id, !!a.done),
-      sub: bits.join(""), actions: rowActions("appointments", a.id) });
+      sub: bits.join(""), actions: rowActions("appointments", a.id, calBtn(a.id)) });
   }
   function toBookRow(a) {
-    const bits = ['<span class="tag alert">not booked</span>'];
+    const bits = ['<span class="tag alert">not booked</span>', snoozeTag(a)];
     const due = apptNextDue(a);
     if (due) {
       const over = daysFromToday(due) < 0;
@@ -999,7 +1171,7 @@
     return row({ title: a.title,
       lead: '<span class="check" aria-hidden="true" style="border-style:dashed;cursor:default"></span>',
       sub: bits.join(""),
-      actions: rowActions("appointments", a.id,
+      actions: rowActions("appointments", a.id, snoozeBtn("appointments", a.id) + calBtn(a.id) +
         '<button type="button" class="btn btn-ghost btn-sm" data-act="edit" data-coll="appointments" data-id="' + a.id + '">Pick a date</button>') });
   }
   // Recurring appointments that aren't worth phoning about yet. Visible so the
@@ -1021,8 +1193,9 @@
       bits.push('<span class="when' + (late ? " late" : "") + '">' + (late ? "Due " + esc(fmtDay(t.due)) : esc(fmtDay(t.due, true))) + "</span>");
     }
     if (t.notes) bits.push(esc(t.notes));
+    bits.push(snoozeTag(t));
     return row({ title: t.title, done: !!t.done, lead: checkBtn("tasks", t.id, !!t.done),
-      sub: bits.join(""), actions: rowActions("tasks", t.id) });
+      sub: bits.join(""), actions: rowActions("tasks", t.id, t.done ? "" : snoozeBtn("tasks", t.id)) });
   }
   function buyRow(b) {
     const bits = [];
@@ -1040,15 +1213,23 @@
     const bits = ['<span class="when' + (due < 0 ? " late" : "") + '">' +
       (due > 0 ? "in " + due + (due === 1 ? " day" : " days") : due === 0 ? "due today" : -due + (due === -1 ? " day over" : " days over")) + "</span>",
       '<span class="tag">every ' + esc(everyLabel(c.everyDays)) + "</span>",
-      "last done " + esc(agoLabel(daysSince(c.lastDone)))];
+      "last done " + esc(agoLabel(daysSince(c.lastDone))), snoozeTag(c)];
     return row({ title: c.title, lead: doBtn("chore-done", c.id, "Mark done today"),
-      sub: bits.join(""), actions: rowActions("chores", c.id) });
+      sub: bits.join(""), actions: rowActions("chores", c.id, snoozeBtn("chores", c.id)) });
   }
   function personRow(p) {
     const bits = ["last talked " + esc(agoLabel(daysSince(p.lastContact))), '<span class="tag">' + esc(cadenceLabel(p.cadenceDays)) + "</span>"];
+    // Far-off birthdays are noise here, and a looming one already has its own
+    // block on Today — so this line stays quiet and never doubles the alarm.
+    const bd = birthdayIn(p);
+    if (bd !== null && bd <= 60) {
+      bits.push('<span class="when">birthday ' + esc(fmtDay(nextBirthday(p))) +
+        (bd > 1 ? ", in " + bd + " days" : "") + "</span>");
+    }
     if (p.note) bits.push(esc(p.note));
+    bits.push(snoozeTag(p));
     return row({ title: p.name, lead: doBtn("person-touch", p.id, "Mark that you reached out"),
-      sub: bits.join(""), actions: rowActions("people", p.id) });
+      sub: bits.join(""), actions: rowActions("people", p.id, snoozeBtn("people", p.id)) });
   }
   function projectRow(p) {
     const stale = projectStale(p);
@@ -1087,7 +1268,7 @@
       tasks: { n: state.tasks.filter((t) => !t.done).length, hot: d.dueTasks.length > 0 },
       buy: { n: state.buy.filter((b) => !b.done).length, hot: false },
       chores: { n: d.chores.length, hot: false },
-      people: { n: d.people.length, hot: false },
+      people: { n: d.people.length + d.birthdays.length, hot: d.birthdays.length > 0 },
       projects: { n: state.projects.filter((p) => (p.status || "active") === "active").length, hot: d.stalled.length > 0 },
     };
   }
@@ -1153,6 +1334,18 @@
     if (d.people.length) {
       html += block("Worth a call", d.people.length > 2 ? d.people.length - 2 + " more" : null, listOf(d.people.slice(0, 2), personRow));
     }
+    if (d.birthdays.length) {
+      html += block("Birthdays coming up", "time to sort a card or a present",
+        listOf(d.birthdays.slice(0, 3), (p) => {
+          const days = birthdayIn(p);
+          return row({ title: p.name + "'s birthday",
+            lead: '<span class="check" aria-hidden="true" style="border-style:dotted;cursor:default;opacity:.5"></span>',
+            sub: '<span class="when">' + esc(fmtDay(nextBirthday(p), true)) +
+              (days > 1 ? " \u00b7 in " + days + " days" : "") + "</span>",
+            actions: '<div class="row-actions"><button type="button" class="btn btn-ghost btn-sm" data-act="gift" data-id="' +
+              p.id + '">Add a gift to Buy</button></div>' });
+        }));
+    }
     if (d.toBook.length) {
       html += block("Still need to book", d.toBook.length > 3 ? d.toBook.length - 3 + " more under Schedule" : null,
         listOf(d.toBook.slice(0, 3), toBookRow));
@@ -1200,6 +1393,8 @@
     html += block("Next 7 days", null, listOf(d.week, apptRow));
     html += block("Later", null, listOf(d.later, apptRow));
     html += block("Comes around again", "nothing to do until the date shown", listOf(d.waiting, waitingRow));
+    html += block("Put off for now", "back when you said",
+      listOf(state.appointments.filter((a) => a.status === "to_book" && !a.done && isSnoozed(a)), toBookRow));
     const done = state.appointments.filter((a) => a.done);
     html += block("Been and gone", done.length + " kept", listOf(done.slice(-8).reverse(), apptRow));
     if (!state.appointments.length) {
@@ -1210,7 +1405,9 @@
   }
 
   function viewTasks() {
-    const open = state.tasks.filter((t) => !t.done);
+    const all = state.tasks.filter((t) => !t.done);
+    const napping = all.filter(isSnoozed);
+    const open = all.filter(notSnoozed);
     const done = state.tasks.filter((t) => t.done);
     const t = today();
     const overdue = open.filter((x) => x.due && x.due < t).sort((a, b) => a.due.localeCompare(b.due));
@@ -1222,6 +1419,7 @@
     html += block("This week", null, listOf(soon, taskRow));
     html += block("Later", null, listOf(later, taskRow));
     html += block("No date", "whenever you get to them", listOf(open.filter((x) => !x.due), taskRow));
+    html += block("Put off for now", "back when you said", listOf(napping, taskRow));
     html += block("Done", done.length + " finished", listOf(done.slice(-10).reverse(), taskRow));
     if (!state.tasks.length) html += emptyView("Nothing to do", "Try “renew registration friday” or “change address”.");
     return html;
@@ -1253,12 +1451,14 @@
 
   function viewChores() {
     const all = state.chores.map((c) => Object.assign({ _due: choreDue(c) }, c)).sort((a, b) => a._due - b._due);
-    const due = all.filter((c) => c._due <= 0);
+    const napping = all.filter(isSnoozed);
+    const due = all.filter((c) => c._due <= 0 && notSnoozed(c));
     let html = pageHead("Chores", "The recurring stuff",
       due.length ? due.length + " due — Today only ever shows you three of them." : "Nothing due. The house can wait.",
       addBtn("chores", "+ Add"));
     html += block("Due now", due.length > 3 ? "Today shows the top 3" : null, listOf(due, choreRow), due.length > 5);
-    html += block("Coming up", null, listOf(all.filter((c) => c._due > 0), choreRow));
+    html += block("Coming up", null, listOf(all.filter((c) => c._due > 0 && notSnoozed(c)), choreRow));
+    html += block("Put off for now", "back when you said", listOf(napping, choreRow));
     // Suggestions don't vanish the moment you take one — they stay until
     // they're all used up, minus whatever is already on the list.
     const have = new Set(state.chores.map((c) => String(c.title || "").trim().toLowerCase()));
@@ -1281,12 +1481,14 @@
 
   function viewPeople() {
     const all = state.people.map((p) => Object.assign({ _due: personDue(p) }, p)).sort((a, b) => a._due - b._due);
-    const due = all.filter((p) => p._due <= 0);
+    const napping = all.filter(isSnoozed);
+    const due = all.filter((p) => p._due <= 0 && notSnoozed(p));
     let html = pageHead("People", "Keeping in touch",
       due.length ? due.length + (due.length === 1 ? " person you meant to call" : " people you meant to call") : "Everyone's heard from you recently.",
       addBtn("people", "+ Add"));
     html += block("Overdue a call", null, listOf(due, personRow), due.length > 0);
-    html += block("All good for now", null, listOf(all.filter((p) => p._due > 0), personRow));
+    html += block("All good for now", null, listOf(all.filter((p) => p._due > 0 && notSnoozed(p)), personRow));
+    html += block("Put off for now", "back when you said", listOf(napping, personRow));
     if (!state.people.length) {
       html += emptyView("Nobody on the list yet",
         "Add who you want to stay close to and how often — “keep in touch with Grandma every 2 weeks”. It nudges, it doesn't nag.");
@@ -1655,8 +1857,11 @@
       fields: [{ k: "name", label: "Who", type: "text", required: true },
         { k: "cadenceDays", label: "Reach out", type: "select", options: CADENCES, numeric: true, half: true },
         { k: "lastContact", label: "Last talked", type: "date", half: true },
+        { k: "birthday", label: "Birthday", type: "date", half: true },
+        { k: "birthdayLead", label: "Tell me", type: "select", numeric: true, half: true,
+          options: [[7, "A week before"], [14, "2 weeks before"], [30, "A month before"]] },
         { k: "note", label: "Note to self", type: "textarea" }],
-      blank: { name: "", cadenceDays: 14, lastContact: today(), note: "" },
+      blank: { name: "", cadenceDays: 14, lastContact: today(), birthday: null, birthdayLead: 14, note: "" },
     },
     projects: {
       title: "Project",
@@ -1806,6 +2011,40 @@
   });
 
   /* =====================================================================
+     Snooze
+     ===================================================================== */
+  const snoozeDlg = document.getElementById("snoozer");
+  let snoozing = null;
+
+  function snoozeChoices() {
+    const dow = fromISO(today()).getDay();
+    const toSat = (6 - dow + 7) % 7 || 7;
+    return [["Tomorrow", shift(today(), 1)], ["This weekend", shift(today(), toSat)],
+      ["Next week", shift(today(), 7)], ["In two weeks", shift(today(), 14)]];
+  }
+
+  function openSnooze(coll, id) {
+    const doc = find(coll, id);
+    if (!doc) return;
+    snoozing = { coll: coll, id: id };
+    document.getElementById("snooze-what").textContent =
+      "\u201C" + titleOf(doc) + "\u201D stops asking until the day you pick. Its real date doesn't change.";
+    document.getElementById("snooze-opts").innerHTML = snoozeChoices().map(([label, date]) =>
+      '<button type="button" class="chip" data-act="snooze-to" data-date="' + date + '">' +
+      esc(label) + ' <span class="k">' + esc(fmtDay(date)) + "</span></button>").join("");
+    document.getElementById("snooze-clear").hidden = !isSnoozed(doc);
+    snoozeDlg.showModal();
+  }
+
+  document.getElementById("snooze-clear").addEventListener("click", () => {
+    if (!snoozing) return;
+    patch(snoozing.coll, snoozing.id, { snoozedUntil: null });
+    snoozeDlg.close();
+    snoozing = null;
+    toast("Back on the list");
+  });
+
+  /* =====================================================================
      Toast + undo
      ===================================================================== */
   let toastEl = null, toastTimer = null;
@@ -1872,6 +2111,42 @@
     if (act === "new") { openEditor(coll, null); return; }
     if (act === "del") { askDelete(coll, id); return; }
     if (act === "paste") { openImporter(""); return; }
+    if (act === "snooze") { openSnooze(coll, id); return; }
+    if (act === "snooze-to") {
+      if (!snoozing) return;
+      const until = btn.dataset.date;
+      const target = snoozing;
+      patch(target.coll, target.id, { snoozedUntil: until });
+      snoozeDlg.close();
+      snoozing = null;
+      toast("Back " + fmtDay(until), () => patch(target.coll, target.id, { snoozedUntil: null }));
+      return;
+    }
+    if (act === "ics") {
+      const a = find("appointments", id);
+      if (!a) return;
+      const events = apptEvents(a);
+      if (!events.length) { toast("Give it a date first, or a repeat to book against."); return; }
+      saveICS(a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "appointment", events);
+      toast("Opened it for your calendar");
+      return;
+    }
+    if (act === "ics-all") {
+      let events = [];
+      for (const a of state.appointments) events = events.concat(apptEvents(a));
+      for (const person of state.people) {
+        const bd = nextBirthday(person);
+        if (bd) {
+          events = events.concat(icsEvent({
+            uid: "bday-" + person.id + "@offmyplate", title: person.name + "'s birthday",
+            date: bd, yearly: true, alarms: ["-PT15H"],
+          }));
+        }
+      }
+      saveICS("off-my-plate-" + today(), events);
+      if (events.length) toast(events.length + " sent to your calendar");
+      return;
+    }
     if (act === "cheats") { renderCheats(); document.getElementById("cheats").showModal(); return; }
     if (act === "try-text") {
       qaInput.value = btn.dataset.text;
@@ -1907,6 +2182,19 @@
       if (p) toast("Logged. " + p.name + " is off the list for now.");
       return;
     }
+    if (act === "gift") {
+      const person = find("people", id);
+      if (!person) return;
+      const title = "Gift for " + person.name;
+      if (state.buy.some((b) => !b.done && b.title.toLowerCase() === title.toLowerCase())) {
+        toast("Already on the Buy list.");
+        return;
+      }
+      create("buy", { title: title, category: "gifts", want: false,
+        notes: nextBirthday(person) ? "Birthday " + fmtDay(nextBirthday(person), true) : "", done: false });
+      toast("\u201C" + title + "\u201D added to Buy");
+      return;
+    }
     if (act === "project-touch") { patch("projects", id, { lastTouched: today() }); toast("Nice — clock reset on that one."); return; }
     if (act === "someday") { patch("projects", id, { status: "someday" }); toast("Parked. It'll wait under Someday."); return; }
     if (act === "clear-bought") {
@@ -1939,8 +2227,19 @@
     window.scrollTo(0, 0);
   });
   document.getElementById("btn-paste").addEventListener("click", () => openImporter(""));
+  document.getElementById("btn-copy-url").addEventListener("click", async () => {
+    const url = location.origin + location.pathname + "?add=";
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("Address copied");
+    } catch (err) {
+      toast("Couldn't copy \u2014 select it by hand instead.");
+    }
+  });
+
   document.getElementById("btn-settings").addEventListener("click", () => {
     markTheme();
+    document.getElementById("add-url").textContent = location.origin + location.pathname + "?add=buy%20oat%20milk";
     document.getElementById("settings").showModal();
   });
   document.addEventListener("keydown", (e) => {
@@ -2026,10 +2325,29 @@
     if (mode !== "auto") document.documentElement.setAttribute("data-theme", mode);
   })();
 
+  // Opened with ?add=... — from an iOS Shortcut, a bookmark, or Siri. Take it,
+  // then scrub the URL so a refresh doesn't add the same thing twice.
+  function consumeUrlAdd() {
+    let text = null;
+    try { text = new URLSearchParams(location.search).get("add"); } catch (err) { return; }
+    if (text !== null) {
+      try { history.replaceState(null, "", location.pathname); } catch (err) { /* ignore */ }
+    }
+    const trimmed = String(text || "").trim();
+    if (!trimmed) return;
+    if (/\r|\n/.test(trimmed)) { openImporter(trimmed); return; }
+    const parsed = parseQuick(trimmed);
+    if (!parsed.title) return;
+    const coll = parsed.kind;
+    const id = create(coll, docFromParse(parsed));
+    toast("Added \u201C" + parsed.title + "\u201D to " + KIND_LABEL[coll], () => remove(coll, id));
+  }
+
   load();
   const tidied = tidyImported();
   render();
   updateHint();
+  consumeUrlAdd();
   if (tidied) {
     toast("Tidied " + tidied + " items that came in with checkboxes");
   }

@@ -94,6 +94,44 @@ A repeat of two months or more that names an appointment is read as one of
 these; anything shorter stays a chore, so "clean the bathroom every 2 weeks"
 and "teeth cleaning every 6 months" go to different places.
 
+## Getting it to reach you
+
+A static page can't push a notification — that needs a server. So it hands off
+to the thing already in your pocket that can. The calendar icon on an
+appointment, or **Settings → Export everything dated**, writes an `.ics` your
+calendar app will take:
+
+- the appointment itself, with alarms a day before and two hours before
+- a separate all-day **"Ring to book: …"** entry on the day the booking window
+  opens, alarmed for 9am
+- birthdays, as yearly repeats alarmed the evening before
+
+Past appointments are left out, and re-exporting replaces entries rather than
+piling them up (each carries a stable UID).
+
+## Adding things by voice
+
+Opening the page with `?add=` and some text files it on the spot, then scrubs
+the URL so a refresh can't add it twice. Multi-line text opens the importer
+instead. Make an iOS Shortcut — Text, then Open URL — and Siri becomes a
+capture path: "add to Off My Plate". The address is in Settings, with a copy
+button.
+
+## Birthdays
+
+A person can carry a birthday and a lead time (a week, two weeks, a month).
+The nudge lands early enough to do something about it, the same idea as the
+booking lead, and one tap drops "Gift for <name>" onto the Buy list under
+Gifts, with the date in the note.
+
+## Putting something off
+
+The clock icon on a task, chore, person or unbooked appointment defers it —
+tomorrow, the weekend, next week, a fortnight. It disappears from Today and
+from the overdue groups, and waits in *Put off for now* at the foot of its
+list with the date it comes back. The real due date never changes, so nothing
+is quietly rewritten to make the screen look tidier.
+
 ## Pasting a whole list
 
 The clipboard icon in the top bar (or pasting anything multi-line into the add
