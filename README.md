@@ -132,6 +132,21 @@ from the overdue groups, and waits in *Put off for now* at the foot of its
 list with the date it comes back. The real due date never changes, so nothing
 is quietly rewritten to make the screen look tidier.
 
+## The bin
+
+Deleting puts something in **Recently deleted** rather than ending it. The
+undo toast is still there for the immediate mis-tap; the bin is for noticing a
+week later. Reach it from Settings.
+
+Each entry says which list it came from, when it went, and how long it has
+left — 30 days, after which it clears itself on the next load so the bin never
+becomes another list to manage. *Put it back* returns it to where it came
+from, minting a fresh id if that one has since been reused, so a restore can
+never overwrite something newer. *Delete for good* and *Empty it now* both
+ask first, and neither can be undone.
+
+The bin is included in backups.
+
 ## Pasting a whole list
 
 The clipboard icon in the top bar (or pasting anything multi-line into the add

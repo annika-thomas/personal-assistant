@@ -511,6 +511,13 @@
       <p>On iPhone: Share, then Add to Home Screen. On Android or a laptop: the install icon in the address bar. It opens like an app and works with no signal.</p>
     </div>
     <div class="settings-group">
+      <h3>Recently deleted</h3>
+      <p id="bin-note">Anything you delete waits here for 30 days before it goes for good.</p>
+      <div class="chips">
+        <button type="button" class="btn btn-ghost btn-sm" data-act="open-bin">Open the bin</button>
+      </div>
+    </div>
+    <div class="settings-group">
       <h3>Start over</h3>
       <p>Deletes every item in this browser. Save a backup first if you're not sure.</p>
       <button type="button" class="btn btn-ghost btn-sm" id="btn-wipe">Delete everything</button>
@@ -527,7 +534,13 @@
      Data
      ===================================================================== */
   const COLLS = ["inbox", "appointments", "tasks", "buy", "chores", "people", "projects"];
-  const state = { inbox: [], appointments: [], tasks: [], buy: [], chores: [], people: [], projects: [] };
+  // Deleted things go to `trash` and wait there. It is persisted and backed up
+  // like everything else, but it is not a list you can file into, so it stays
+  // out of COLLS and out of the nav, search and import loops.
+  const STORED = COLLS.concat(["trash"]);
+  const TRASH_DAYS = 30;
+  const TRASH_MAX = 200;
+  const state = { inbox: [], appointments: [], tasks: [], buy: [], chores: [], people: [], projects: [], trash: [] };
 
   const STORE_KEY = "offmyplate.v2";
   const THEME_KEY = "offmyplate.theme";
@@ -561,7 +574,7 @@
       const raw = localStorage.getItem(STORE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      for (const c of COLLS) if (Array.isArray(parsed[c])) state[c] = parsed[c];
+      for (const c of STORED) if (Array.isArray(parsed[c])) state[c] = parsed[c];
     } catch (e) { /* blocked or corrupt storage — start empty rather than break */ }
   }
   let saveWarned = false;
@@ -1513,6 +1526,31 @@
     return html;
   }
 
+  function trashRow(item) {
+    const from = KIND_LABEL[item._from] || "a list";
+    const gone = item._deletedAt ? daysSince(String(item._deletedAt).slice(0, 10)) : null;
+    const left = gone === null ? TRASH_DAYS : Math.max(0, TRASH_DAYS - gone);
+    return row({ title: titleOf(item) || "(untitled)",
+      lead: '<span class="check" aria-hidden="true" style="border-style:dotted;cursor:default;opacity:.45"></span>',
+      sub: "was in " + esc(from) + '<span class="when">deleted ' + esc(agoLabel(gone)) + "</span>" +
+        '<span class="tag">' + (left ? "gone for good in " + left + (left === 1 ? " day" : " days") : "goes today") + "</span>",
+      actions: '<div class="row-actions">' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="restore" data-id="' + item.id + '">Put it back</button>' +
+        '<button type="button" class="icon-btn danger" data-act="purge-one" data-id="' + item.id +
+        '" aria-label="Delete for good">' + TRASH + "</button></div>" });
+  }
+
+  function viewTrash() {
+    const count = state.trash.length;
+    let html = pageHead("Recently deleted", "The bin",
+      count ? count + (count === 1 ? " thing" : " things") + " waiting. Anything here clears itself after " + TRASH_DAYS + " days."
+            : "Nothing in here. Deleted things wait " + TRASH_DAYS + " days before they go for good.",
+      (count ? '<button type="button" class="btn btn-ghost btn-sm" data-act="empty-bin">Empty it now</button> ' : "") +
+      '<button type="button" class="btn btn-ghost btn-sm" data-act="nav" data-view="today">Back</button>');
+    if (!count) return html + emptyView("Empty", "Delete anything and it lands here first, so a mis-tap is never the end of it.");
+    return html + '<section class="block"><div class="list">' + state.trash.map(trashRow).join("") + "</div></section>";
+  }
+
   function viewFind() {
     let html = pageHead("Search", "Find anything", "Every list at once — buy, do, schedule, chores, people, projects, inbox.");
     html += '<div class="block"><div class="field"><label for="find-input">Search</label>' +
@@ -1620,7 +1658,8 @@
      Render
      ===================================================================== */
   const VIEWS = { today: viewToday, inbox: viewInbox, appointments: viewAppointments, tasks: viewTasks,
-    buy: viewBuy, chores: viewChores, people: viewPeople, projects: viewProjects, find: viewFind };
+    buy: viewBuy, chores: viewChores, people: viewPeople, projects: viewProjects,
+    find: viewFind, trash: viewTrash };
 
   let raf = null;
   function render() {
@@ -2070,12 +2109,34 @@
   function askDelete(coll, id) {
     const doc = find(coll, id);
     if (!doc) return;
-    const copy = Object.assign({}, doc);
-    remove(coll, id);
-    toast("Deleted “" + titleOf(doc) + "”", () => {
-      state[coll] = state[coll].concat([copy]);
-      save(); render();
-    });
+    const copy = Object.assign({ _from: coll, _deletedAt: new Date().toISOString() }, doc);
+    state[coll] = state[coll].filter((d) => d.id !== id);
+    state.trash = [copy].concat(state.trash).slice(0, TRASH_MAX);
+    save(); render();
+    toast("Deleted \u201C" + titleOf(doc) + "\u201D", () => restoreFromBin(copy.id));
+  }
+
+  function restoreFromBin(id) {
+    const item = state.trash.find((d) => d.id === id);
+    if (!item) return null;
+    const coll = COLLS.indexOf(item._from) >= 0 ? item._from : "inbox";
+    const doc = Object.assign({}, item);
+    delete doc._from;
+    delete doc._deletedAt;
+    // An id can have been reused since — a restore must never overwrite.
+    if (state[coll].some((d) => d.id === doc.id)) doc.id = newId();
+    state[coll] = state[coll].concat([doc]);
+    state.trash = state.trash.filter((d) => d.id !== id);
+    save(); render();
+    return coll;
+  }
+
+  // The bin empties itself so it never becomes another list to manage.
+  function purgeBin() {
+    const cutoff = shift(today(), -TRASH_DAYS);
+    const before = state.trash.length;
+    state.trash = state.trash.filter((d) => !d._deletedAt || String(d._deletedAt).slice(0, 10) >= cutoff);
+    if (state.trash.length !== before) save();
   }
 
   /* =====================================================================
@@ -2112,6 +2173,34 @@
     if (act === "del") { askDelete(coll, id); return; }
     if (act === "paste") { openImporter(""); return; }
     if (act === "snooze") { openSnooze(coll, id); return; }
+    if (act === "restore") {
+      const landed = restoreFromBin(id);
+      if (landed) toast("Back in " + KIND_LABEL[landed]);
+      return;
+    }
+    if (act === "purge-one") {
+      const item = state.trash.find((d) => d.id === id);
+      if (!item) return;
+      if (!window.confirm("Delete \u201C" + titleOf(item) + "\u201D for good? This one can't be undone.")) return;
+      state.trash = state.trash.filter((d) => d.id !== id);
+      save(); render();
+      return;
+    }
+    if (act === "empty-bin") {
+      if (!state.trash.length) return;
+      if (!window.confirm("Empty the bin? " + state.trash.length + " things go for good.")) return;
+      state.trash = [];
+      save(); render();
+      toast("Bin emptied");
+      return;
+    }
+    if (act === "open-bin") {
+      document.getElementById("settings").close();
+      view = "trash";
+      render();
+      window.scrollTo(0, 0);
+      return;
+    }
     if (act === "snooze-to") {
       if (!snoozing) return;
       const until = btn.dataset.date;
@@ -2239,6 +2328,10 @@
 
   document.getElementById("btn-settings").addEventListener("click", () => {
     markTheme();
+    document.getElementById("bin-note").textContent = state.trash.length
+      ? state.trash.length + (state.trash.length === 1 ? " thing is" : " things are") +
+        " in the bin, clearing themselves " + TRASH_DAYS + " days after you deleted them."
+      : "Anything you delete waits here for " + TRASH_DAYS + " days before it goes for good.";
     document.getElementById("add-url").textContent = location.origin + location.pathname + "?add=buy%20oat%20milk";
     document.getElementById("settings").showModal();
   });
@@ -2265,7 +2358,7 @@
 
   document.getElementById("btn-export").addEventListener("click", () => {
     const payload = { app: "off-my-plate", version: 2, exportedAt: new Date().toISOString() };
-    for (const c of COLLS) payload[c] = state[c];
+    for (const c of STORED) payload[c] = state[c];
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -2289,7 +2382,7 @@
       try { parsed = JSON.parse(String(reader.result)); }
       catch (err) { toast("That file isn't a backup this app can read."); return; }
       let added = 0;
-      for (const c of COLLS) {
+      for (const c of STORED) {
         if (!Array.isArray(parsed[c])) continue;
         const seen = new Set(state[c].map((d) => d.id));
         for (const d of parsed[c]) {
@@ -2310,7 +2403,7 @@
 
   document.getElementById("btn-wipe").addEventListener("click", () => {
     if (!window.confirm("Delete every item in this browser? This can't be undone.")) return;
-    for (const c of COLLS) state[c] = [];
+    for (const c of STORED) state[c] = [];
     save(); render();
     document.getElementById("settings").close();
     toast("All clear. Starting fresh.");
@@ -2344,6 +2437,7 @@
   }
 
   load();
+  purgeBin();
   const tidied = tidyImported();
   render();
   updateHint();
