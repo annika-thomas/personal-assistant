@@ -113,9 +113,32 @@ piling them up (each carries a stable UID).
 
 Opening the page with `?add=` and some text files it on the spot, then scrubs
 the URL so a refresh can't add it twice. Multi-line text opens the importer
-instead. Make an iOS Shortcut — Text, then Open URL — and Siri becomes a
-capture path: "add to Off My Plate". The address is in Settings, with a copy
-button.
+instead. The address is in Settings, with a copy button.
+
+### The iOS Shortcut
+
+Three actions, in the Shortcuts app:
+
+1. **Dictate Text** — in its options set *Stop Listening: After Pause*.
+2. **URL Encode**, with *Dictated Text* as its input. This is what keeps an
+   ampersand or a hash from cutting the sentence short.
+3. **Open URLs** — type
+   `https://annika-thomas.github.io/personal-assistant/?add=` into the field
+   and insert the *URL Encoded Text* variable right after the `=`.
+
+Rename the shortcut to **Add to Off My Plate** — on iOS the name *is* the Siri
+phrase, so "Hey Siri, add to Off My Plate" runs it, listens, and files what you
+said. Swap Dictate Text for **Ask for Input** if you would rather type.
+
+It opens the app to do it, because the page has to be running to record
+anything; a silent add needs a server.
+
+**Check where it lands.** iOS may keep a home-screen web app's storage separate
+from Safari's, and this app keeps everything in local storage. Run the shortcut
+once, then open the app the way you normally do and see whether the item is
+there. If it isn't, pick one home — use it in Safari, or open the shortcut's URL
+from inside the installed app — or it's the point at which a small backend
+starts earning its keep.
 
 ## Birthdays
 
