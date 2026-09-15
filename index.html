@@ -343,10 +343,15 @@
     padding: 13px 20px; border-top: 1px solid var(--line-soft); background: var(--ground); border-radius: 0 0 13px 13px;
   }
   .dlg-foot .spacer { margin-right: auto; }
-  .field { display: grid; gap: 4px; }
+  /* A grid item defaults to min-width:auto, which is min-content — and on iOS a
+     date input's min-content is wide enough to shove itself out of the dialog.
+     Letting these shrink is what keeps a filled date inside its box. */
+  .field { display: grid; gap: 4px; min-width: 0; }
+  .field > * { min-width: 0; }
   .field label { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
   .field input, .field select, .field textarea {
-    border: 1px solid var(--line); background: var(--ground); border-radius: 8px; padding: 8px 10px; font-size: 15px; width: 100%;
+    border: 1px solid var(--line); background: var(--ground); border-radius: 8px; padding: 8px 10px;
+    font-size: 15px; width: 100%; min-width: 0; max-width: 100%;
   }
   /* A date, a time or a count wants about as much room as its content. Run one
      full width and it reads as a broken empty box — especially on iOS, where an
@@ -358,7 +363,10 @@
      dialog. auto lets it size to its longest option. */
   .field select { width: auto; max-width: 100%; justify-self: start; }
   .field textarea { resize: vertical; min-height: 150px; font-family: inherit; line-height: 1.55; }
-  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 12px; }
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .field-row > * { min-width: 0; }
+  /* Two date-sized fields don't fit side by side on a phone. Stack them. */
+  @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
 
   .imp { display: flex; flex-direction: column; gap: 2px; }
   .imp-line { display: flex; align-items: center; gap: 6px 9px; padding: 5px 6px; border-radius: 7px; cursor: pointer; flex-wrap: wrap; }
