@@ -61,6 +61,10 @@ the destination before you commit — a dropdown overrides it.
 Anything it can't confidently place lands in the **Inbox** with one-tap buttons
 to file it, rather than being dropped in the wrong list.
 
+When it does get something wrong, the pencil icon on any row opens the editor
+with a **List** field at the top: pick a different one and the form rebuilds for
+it, carrying the name, notes and any date across. Nothing moves until you save.
+
 Dates it understands: `today`, `tonight`, `tomorrow`, a weekday name
 (`tues`, `next friday`), `in 3 days`, `sep 20`, `20 sep`, `9/20`, `next week`.
 Times: `2pm`, `2:30pm`, `14:00`, `noon`. Recurrence: `every week`,

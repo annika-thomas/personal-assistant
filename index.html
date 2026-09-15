@@ -1581,32 +1581,10 @@
     return '<div class="field"><label for="' + id + '">' + esc(f.label) + "</label>" + control + "</div>";
   }
 
-  function openEditor(coll, id) {
+  // Read whatever is currently typed into the form, using the schema of the
+  // list it was drawn for.
+  function readForm(coll) {
     const spec = SCHEMA[coll];
-    if (!spec) return;
-    const doc = id ? find(coll, id) : null;
-    if (id && !doc) return;
-    const data = doc || spec.blank;
-    editing = { coll: coll, id: id || null };
-    document.getElementById("editor-title").textContent = (id ? "Edit " : "New ") + spec.title.toLowerCase();
-    let html = "", buf = [];
-    const flush = () => { if (buf.length) { html += buf.length === 2 ? '<div class="field-row">' + buf.join("") + "</div>" : buf.join(""); buf = []; } };
-    for (const f of spec.fields) {
-      const cell = fieldHtml(f, data[f.k]);
-      if (f.half) { buf.push(cell); if (buf.length === 2) flush(); } else { flush(); html += cell; }
-    }
-    flush();
-    dlgBody.innerHTML = html;
-    document.getElementById("editor-delete").hidden = !id;
-    dlg.showModal();
-    const first = dlgBody.querySelector("input, select, textarea");
-    if (first) first.focus();
-  }
-
-  document.getElementById("editor-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    if (!editing) return;
-    const spec = SCHEMA[editing.coll];
     const out = {};
     for (const f of spec.fields) {
       const el = dlgBody.querySelector('[name="' + f.k + '"]');
@@ -1617,19 +1595,106 @@
       else if ((f.type === "date" || f.type === "time") && !v) v = null;
       out[f.k] = v;
     }
+    return out;
+  }
+
+  // Moving between lists: keep what both sides understand — the name, the
+  // notes, a date — and let the rest fall back to the new list's defaults.
+  function carryOver(values, toColl, doneWas) {
+    const out = Object.assign({}, SCHEMA[toColl].blank);
+    const name = (values.title !== undefined ? values.title : values.name) || "";
+    const notes = (values.notes !== undefined ? values.notes : values.note) || "";
+    const when = values.date || values.due || null;
+    if ("title" in out) out.title = name;
+    if ("name" in out) out.name = name;
+    if ("notes" in out) out.notes = notes;
+    if ("note" in out) out.note = notes;
+    if (toColl === "appointments") {
+      out.date = when;
+      out.time = values.time || "";
+      out.where = values.where || "";
+      out.status = when ? "booked" : "to_book";
+    }
+    if (toColl === "tasks") out.due = when;
+    if (toColl === "buy") { out.category = buyCategory(name); out.want = !!values.want; }
+    if (toColl === "projects" && values.nextStep) out.nextStep = values.nextStep;
+    if ("done" in out && doneWas !== undefined) out.done = !!doneWas;
+    return out;
+  }
+
+  function listField(coll) {
+    return '<div class="field"><label for="f-__list">List</label><select id="f-__list" name="__list">' +
+      NAV.slice(1).map(([k]) => '<option value="' + k + '"' + (k === coll ? " selected" : "") + ">" +
+        esc(KIND_LABEL[k]) + "</option>").join("") + "</select></div>";
+  }
+
+  function renderEditorFields(coll, data) {
+    const spec = SCHEMA[coll];
+    document.getElementById("editor-title").textContent = (editing.id ? "Edit " : "New ") + spec.title.toLowerCase();
+    let html = listField(coll), buf = [];
+    const flush = () => { if (buf.length) { html += buf.length === 2 ? '<div class="field-row">' + buf.join("") + "</div>" : buf.join(""); buf = []; } };
+    for (const f of spec.fields) {
+      const cell = fieldHtml(f, data[f.k]);
+      if (f.half) { buf.push(cell); if (buf.length === 2) flush(); } else { flush(); html += cell; }
+    }
+    flush();
+    dlgBody.innerHTML = html;
+  }
+
+  function openEditor(coll, id) {
+    const spec = SCHEMA[coll];
+    if (!spec) return;
+    const doc = id ? find(coll, id) : null;
+    if (id && !doc) return;
+    editing = { coll: coll, id: id || null, from: coll, done: doc ? doc.done : undefined };
+    renderEditorFields(coll, doc || spec.blank);
+    document.getElementById("editor-delete").hidden = !id;
+    dlg.showModal();
+    const first = dlgBody.querySelector('[name="' + spec.fields[0].k + '"]');
+    if (first) first.focus();
+  }
+
+  // Swapping the list rebuilds the form for the new one, keeping what fits.
+  dlgBody.addEventListener("change", (e) => {
+    if (!editing || e.target.name !== "__list") return;
+    const next = e.target.value;
+    if (next === editing.coll) return;
+    const carried = carryOver(readForm(editing.coll), next, editing.done);
+    editing.coll = next;
+    renderEditorFields(next, carried);
+    const sel = dlgBody.querySelector('[name="__list"]');
+    if (sel) sel.focus();
+  });
+
+  document.getElementById("editor-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!editing) return;
+    const spec = SCHEMA[editing.coll];
+    const out = readForm(editing.coll);
     const nameKey = spec.fields[0].k;
     if (!String(out[nameKey] || "").trim()) { toast("It needs a name."); return; }
     if (editing.coll === "appointments") {
       if (out.status === "booked" && !out.date) out.status = "to_book";
       if (out.date && out.status === "to_book") out.status = "booked";
     }
-    if (editing.id) patch(editing.coll, editing.id, out);
-    else create(editing.coll, Object.assign({}, spec.blank, out));
+    const moved = editing.id && editing.coll !== editing.from;
+    if (moved) {
+      const body = Object.assign({}, spec.blank, out);
+      if ("done" in body && editing.done !== undefined) body.done = !!editing.done;
+      remove(editing.from, editing.id);
+      create(editing.coll, body);
+    } else if (editing.id) {
+      patch(editing.coll, editing.id, out);
+    } else {
+      create(editing.coll, Object.assign({}, spec.blank, out));
+    }
     dlg.close();
+    const landed = editing.coll;
     editing = null;
+    if (moved) toast("Moved to " + KIND_LABEL[landed]);
   });
   document.getElementById("editor-delete").addEventListener("click", () => {
-    if (editing && editing.id) { const cur = editing; dlg.close(); editing = null; askDelete(cur.coll, cur.id); }
+    if (editing && editing.id) { const cur = editing; dlg.close(); editing = null; askDelete(cur.from, cur.id); }
   });
 
   /* =====================================================================
