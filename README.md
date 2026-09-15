@@ -47,6 +47,7 @@ the destination before you commit — a dropdown overrides it.
 | --- | --- |
 | `dentist tues 2pm` | Schedule, booked, next Tuesday at 2:00 PM |
 | `schedule teeth cleaning` | Schedule, flagged *not booked* |
+| `teeth cleaning every 6 months book a month ahead` | Schedule, on a cycle |
 | `buy crispy shallots` | Buy → Groceries, as "Crispy shallots" |
 | `hiking boots` | Buy → want, no rush |
 | `change address` | Do |
@@ -69,6 +70,29 @@ Dates it understands: `today`, `tonight`, `tomorrow`, a weekday name
 (`tues`, `next friday`), `in 3 days`, `sep 20`, `20 sep`, `9/20`, `next week`.
 Times: `2pm`, `2:30pm`, `14:00`, `noon`. Recurrence: `every week`,
 `every 3 days`, `every other week`, `daily`, `monthly`.
+
+## Appointments that come back around
+
+A cleaning every six months needs booking a month out, and the thing that
+actually fails is nobody telling you to phone. So the reminder is for the
+booking, not the appointment — the date looks after itself once it exists.
+
+Give an appointment a **Comes around** interval and a **Remind me to book**
+lead time and it runs a cycle:
+
+1. It sits quietly under *Comes around again*, showing when the next one is due
+   and the day the nudging starts. It asks for nothing until then.
+2. On that day it moves to *Ring them now*, on the Schedule and on Today.
+3. You call, put the date in, and it's an ordinary booked appointment.
+4. You go, tick it off — and instead of being filed away it restarts from the
+   date you actually went, quiet again until the next lead time comes round.
+
+Ticking never finishes a recurring appointment, it only rolls it forward.
+Deleting it is how you stop the cycle.
+
+A repeat of two months or more that names an appointment is read as one of
+these; anything shorter stays a chore, so "clean the bathroom every 2 weeks"
+and "teeth cleaning every 6 months" go to different places.
 
 ## Pasting a whole list
 

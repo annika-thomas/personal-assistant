@@ -483,6 +483,13 @@
     ["groceries", "Groceries"], ["household", "Household"],
     ["care", "Pharmacy & care"], ["pet", "For the pet"], ["other", "Other"],
   ];
+  // A recurring appointment is driven by when the last one happened, not by a
+  // fixed calendar date: the nudge is to BOOK it, which has to land early
+  // enough to get a slot. Teeth cleaning: every 6 months, called a month out.
+  const REPEATS = [[0, "Just the once"], [30, "Every month"], [90, "Every 3 months"],
+    [180, "Every 6 months"], [365, "Every year"], [730, "Every 2 years"]];
+  const LEADS = [[7, "A week ahead"], [14, "2 weeks ahead"], [30, "A month ahead"], [60, "2 months ahead"]];
+
   const CADENCES = [[7, "Weekly"], [14, "Every 2 weeks"], [30, "Monthly"], [60, "Every 2 months"], [90, "Every 3 months"], [180, "Twice a year"]];
 
   const KIND_LABEL = {
@@ -683,6 +690,14 @@
     else if ((m = eat(/\bevery\s+(day|week|month|morning|night|weekday)\b/i))) everyDays = { day: 1, morning: 1, night: 1, weekday: 1, week: 7, month: 30 }[m[1].toLowerCase()];
     else if ((m = eat(/\b(daily|weekly|biweekly|monthly|quarterly|yearly)\b/i))) everyDays = { daily: 1, weekly: 7, biweekly: 14, monthly: 30, quarterly: 90, yearly: 365 }[m[1].toLowerCase()];
 
+    // 3b. "book a month ahead" / "2 weeks in advance"
+    let leadDays = null;
+    if ((m = eat(/\b(?:book(?:ing)?\s+)?(\d+)\s*(week|month)s?\s+(?:ahead|in advance|early|before)\b/i))) {
+      leadDays = Number(m[1]) * { week: 7, month: 30 }[m[2].toLowerCase()];
+    } else if (eat(/\b(?:book(?:ing)?\s+)?a\s+month\s+(?:ahead|in advance|early|before)\b/i)) {
+      leadDays = 30;
+    }
+
     // 4. time of day
     if ((m = eat(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i))) {
       let h = Number(m[1]) % 12;
@@ -741,6 +756,12 @@
     // 8. route it
     if (!kind) {
       if (needsBooking) { kind = "appointments"; status = "to_book"; }
+      // A repeat this far apart that names an appointment is a standing one to
+      // rebook, not a chore — nobody cleans the bathroom twice a year, and
+      // nobody sees a dentist every three days.
+      else if (everyDays && everyDays >= 60 && APPT_WORDS.test(" " + text.toLowerCase() + " ")) {
+        kind = "appointments"; status = "to_book";
+      }
       else if (everyDays) kind = "chores";
       else if (questioned || IDEA_STARTS.test(title)) kind = "projects";
       else if (/^plan\b/i.test(title)) kind = "projects";
@@ -769,12 +790,14 @@
     }
     if (kind === "people") { cadenceDays = everyDays || 14; everyDays = null; }
     if (kind === "chores" && !everyDays) everyDays = 7;
+    if (kind === "appointments" && !leadDays) leadDays = defaultLead(everyDays);
     if (kind === "appointments" && !date && !time) status = "to_book";
     if (kind === "projects" && (questioned || IDEA_STARTS.test(title))) status = "someday";
 
     return {
       kind: kind, sure: sure, title: title, date: date, time: time, everyDays: everyDays,
       cadenceDays: cadenceDays, status: status, where: where, want: want, done: marked.done,
+      leadDays: leadDays,
       suggest: kind === "inbox" ? (words <= 4 ? "buy" : "tasks") : null,
     };
   }
@@ -798,7 +821,9 @@
   function docFromParse(p) {
     switch (p.kind) {
       case "inbox": return { title: p.title, suggest: p.suggest || "buy" };
-      case "appointments": return { title: p.title, status: p.status, date: p.date || null, time: p.time || null, where: p.where || "", notes: "", done: !!p.done };
+      case "appointments": return { title: p.title, status: p.status, date: p.date || null, time: p.time || null,
+        where: p.where || "", notes: "", everyDays: p.everyDays || 0, leadDays: p.leadDays || defaultLead(p.everyDays),
+        lastDone: p.done ? (p.date || today()) : null, done: !!p.done && !p.everyDays };
       case "tasks": return { title: p.title, due: p.date || null, notes: "", done: !!p.done };
       case "buy": return { title: p.title, category: buyCategory(p.title), want: !!p.want, notes: "", done: !!p.done };
       case "chores": return { title: p.title, everyDays: p.everyDays || 7, lastDone: p.done ? today() : null, notes: "" };
@@ -812,7 +837,8 @@
     if (dest === "want") return create("buy", { title: title, category: buyCategory(title), want: true, notes: "", done: !!done });
     if (dest === "buy") return create("buy", { title: title, category: buyCategory(title), want: false, notes: "", done: !!done });
     if (dest === "tasks") return create("tasks", { title: title, due: null, notes: "", done: !!done });
-    if (dest === "appointments") return create("appointments", { title: title, status: "to_book", date: null, time: null, where: "", notes: "", done: !!done });
+    if (dest === "appointments") return create("appointments", { title: title, status: "to_book", date: null, time: null,
+      where: "", notes: "", everyDays: 0, leadDays: 30, lastDone: null, done: !!done });
     if (dest === "chores") return create("chores", { title: title, everyDays: 7, lastDone: today(), notes: "" });
     if (dest === "projects") return create("projects", { title: title, nextStep: "", status: done ? "done" : "active", lastTouched: today(), notes: "" });
     if (dest === "people") return create("people", { name: title, cadenceDays: 14, lastContact: null, note: "" });
@@ -823,6 +849,33 @@
   /* =====================================================================
      Derived
      ===================================================================== */
+  // When the next one is owed: the last one plus the interval. Never had one?
+  // Then it is owed now.
+  function apptNextDue(a) {
+    if (!a.everyDays) return null;
+    return a.lastDone ? shift(a.lastDone, a.everyDays) : today();
+  }
+  // The day the nudging starts — far enough before the appointment is due
+  // that there is still time to get a slot.
+  function apptBookFrom(a) {
+    const due = apptNextDue(a);
+    return due ? shift(due, -(a.leadDays || defaultLead(a.everyDays))) : null;
+  }
+  // One-offs are always worth chasing. A recurring one waits its turn, so the
+  // list only ever shows what is actually worth phoning about today.
+  function apptBookable(a) {
+    if (!a.everyDays) return true;
+    const from = apptBookFrom(a);
+    return !from || from <= today();
+  }
+  function defaultLead(everyDays) {
+    if (!everyDays) return 30;
+    if (everyDays >= 120) return 30;
+    if (everyDays >= 60) return 14;
+    return 7;
+  }
+  const repeatLabel = (n) => (REPEATS.find((r) => r[0] === n) || [0, "every " + everyLabel(n)])[1].toLowerCase();
+
   const choreDue = (c) => (daysSince(c.lastDone) === null ? 0 : (c.everyDays || 7) - daysSince(c.lastDone));
   const personDue = (p) => (daysSince(p.lastContact) === null ? 0 : (p.cadenceDays || 14) - daysSince(p.lastContact));
   const projectStale = (p) => (daysSince(p.lastTouched) === null ? 999 : daysSince(p.lastTouched));
@@ -840,7 +893,10 @@
       week: appts.filter((a) => a.date > t && a.date <= shift(t, 7)).sort(byDateTime),
       later: appts.filter((a) => a.date > shift(t, 7)).sort(byDateTime),
       missed: appts.filter((a) => a.date < t).sort(byDateTime),
-      toBook: state.appointments.filter((a) => a.status === "to_book" && !a.done),
+      toBook: state.appointments.filter((a) => a.status === "to_book" && !a.done && apptBookable(a))
+        .sort((x, y) => String(apptNextDue(x) || "0000").localeCompare(String(apptNextDue(y) || "0000"))),
+      waiting: state.appointments.filter((a) => a.status === "to_book" && !a.done && !apptBookable(a))
+        .sort((x, y) => String(apptBookFrom(x)).localeCompare(String(apptBookFrom(y)))),
       dueTasks: state.tasks.filter((x) => !x.done && x.due && x.due <= t).sort((a, b) => String(a.due).localeCompare(String(b.due))),
       chores: state.chores.map((c) => Object.assign({ _due: choreDue(c) }, c)).filter((c) => c._due <= 0).sort((a, b) => a._due - b._due),
       people: state.people.map((p) => Object.assign({ _due: personDue(p) }, p)).filter((p) => p._due <= 0).sort((a, b) => a._due - b._due),
@@ -900,6 +956,7 @@
     const bits = [];
     if (a.date) bits.push('<span class="when">' + esc(fmtDay(a.date, true)) + (a.time ? " · " + esc(fmtTime(a.time)) : " · all day") + "</span>");
     if (a.where) bits.push(esc(a.where));
+    if (a.everyDays) bits.push('<span class="tag">' + esc(repeatLabel(a.everyDays)) + "</span>");
     if (a.date && a.date < today() && !a.done) bits.push('<span class="late">passed</span>');
     if (a.notes) bits.push(esc(a.notes));
     return row({ title: a.title, done: !!a.done, flag: flag, lead: checkBtn("appointments", a.id, !!a.done),
@@ -907,6 +964,13 @@
   }
   function toBookRow(a) {
     const bits = ['<span class="tag alert">not booked</span>'];
+    const due = apptNextDue(a);
+    if (due) {
+      const over = daysFromToday(due) < 0;
+      bits.push('<span class="when' + (over ? " late" : "") + '">' +
+        (over ? "was due " + esc(fmtDay(due, true)) : "due " + esc(fmtDay(due, true))) + "</span>");
+    }
+    if (a.everyDays) bits.push('<span class="tag">' + esc(repeatLabel(a.everyDays)) + "</span>");
     if (a.where) bits.push(esc(a.where));
     if (a.notes) bits.push(esc(a.notes));
     return row({ title: a.title,
@@ -915,6 +979,18 @@
       actions: rowActions("appointments", a.id,
         '<button type="button" class="btn btn-ghost btn-sm" data-act="edit" data-coll="appointments" data-id="' + a.id + '">Pick a date</button>') });
   }
+  // Recurring appointments that aren't worth phoning about yet. Visible so the
+  // cycle is never a mystery, quiet so it never nags early.
+  function waitingRow(a) {
+    const due = apptNextDue(a), from = apptBookFrom(a);
+    return row({ title: a.title,
+      lead: '<span class="check" aria-hidden="true" style="border-style:dotted;cursor:default;opacity:.5"></span>',
+      sub: '<span class="when">next one around ' + esc(fmtDay(due, true)) + "</span>" +
+        '<span class="tag">' + esc(repeatLabel(a.everyDays)) + "</span>" +
+        "ring them from " + esc(fmtDay(from, true)),
+      actions: rowActions("appointments", a.id) });
+  }
+
   function taskRow(t) {
     const bits = [];
     if (t.due) {
@@ -984,6 +1060,7 @@
       today: { n: d.now.length + d.dueTasks.length + Math.min(3, d.chores.length), hot: d.dueTasks.some((t) => t.due < today()) },
       inbox: { n: state.inbox.length, hot: state.inbox.length > 0 },
       appointments: { n: d.now.length + d.week.length + d.toBook.length, hot: d.toBook.length > 0 },
+      /* waiting appointments deliberately don't count — they aren't asking for anything yet */
       tasks: { n: state.tasks.filter((t) => !t.done).length, hot: d.dueTasks.length > 0 },
       buy: { n: state.buy.filter((b) => !b.done).length, hot: false },
       chores: { n: d.chores.length, hot: false },
@@ -1093,11 +1170,12 @@
   function viewAppointments() {
     const d = todayData();
     let html = pageHead("Schedule", "What's coming up", null, addBtn("appointments", "+ Add"));
-    html += block("Need to book", "make the call, then add the date", listOf(d.toBook, toBookRow), true);
+    html += block("Ring them now", "make the call, then put the date in", listOf(d.toBook, toBookRow), true);
     html += block("Slipped past", null, listOf(d.missed, (a) => apptRow(a, true)), true);
     html += block("Today", null, listOf(d.now, apptRow));
     html += block("Next 7 days", null, listOf(d.week, apptRow));
     html += block("Later", null, listOf(d.later, apptRow));
+    html += block("Comes around again", "nothing to do until the date shown", listOf(d.waiting, waitingRow));
     const done = state.appointments.filter((a) => a.done);
     html += block("Been and gone", done.length + " kept", listOf(done.slice(-8).reverse(), apptRow));
     if (!state.appointments.length) {
@@ -1256,6 +1334,7 @@
       ["dentist tues 2pm", "next Tuesday, 2:00 PM"],
       ["lunch with Andrea", "no date yet, so it files as one to arrange"],
       ["schedule teeth cleaning", "stays flagged until you book it"],
+      ["teeth cleaning every 6 months book a month ahead", "rebooks itself on a cycle"],
     ]],
     ["Shopping", [
       ["buy crispy shallots", "Buy, groceries"],
@@ -1518,8 +1597,13 @@
       fields: [{ k: "title", label: "What", type: "text", required: true },
         { k: "status", label: "Status", type: "select", options: [["booked", "Booked"], ["to_book", "Still need to book"]] },
         { k: "date", label: "Date", type: "date", half: true }, { k: "time", label: "Time", type: "time", half: true },
-        { k: "where", label: "Where", type: "text" }, { k: "notes", label: "Notes", type: "textarea" }],
-      blank: { title: "", status: "booked", date: today(), time: "", where: "", notes: "", done: false },
+        { k: "where", label: "Where", type: "text" },
+        { k: "everyDays", label: "Comes around", type: "select", options: REPEATS, numeric: true, half: true },
+        { k: "leadDays", label: "Remind me to book", type: "select", options: LEADS, numeric: true, half: true },
+        { k: "lastDone", label: "Last one was", type: "date" },
+        { k: "notes", label: "Notes", type: "textarea" }],
+      blank: { title: "", status: "booked", date: today(), time: "", where: "", notes: "",
+        everyDays: 0, leadDays: 30, lastDone: null, done: false },
     },
     tasks: {
       title: "Task",
@@ -1746,7 +1830,17 @@
     if (act === "nav") { view = btn.dataset.view; render(); window.scrollTo(0, 0); return; }
     if (act === "toggle") {
       const doc = find(coll, id);
-      if (doc) patch(coll, id, { done: !doc.done, doneAt: !doc.done ? today() : null });
+      if (!doc) return;
+      // A recurring appointment is never "finished" — going to it restarts the
+      // clock and puts it back in the queue to be booked again.
+      if (coll === "appointments" && doc.everyDays && !doc.done) {
+        const had = doc.date || today();
+        patch("appointments", id, { lastDone: had, date: null, time: null, status: "to_book", done: false });
+        const next = shift(had, doc.everyDays);
+        toast("Done. Next one around " + fmtDay(next, true) + " — I'll say when to ring.");
+        return;
+      }
+      patch(coll, id, { done: !doc.done, doneAt: !doc.done ? today() : null });
       return;
     }
     if (act === "toggle-want") { const b = find("buy", id); if (b) patch("buy", id, { want: !b.want }); return; }
