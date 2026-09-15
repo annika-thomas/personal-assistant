@@ -90,8 +90,13 @@
   }
   body {
     margin: 0;
-    /* Vertical drags and pinch-zoom only — no sideways panning of the app. */
-    touch-action: pan-y pinch-zoom;
+    /* Was pan-y, to stop the app being dragged sideways. That also stopped
+       panning WHILE ZOOMED, so any accidental zoom left the right-hand edge
+       unreachable. The sideways drag is fixed at its source now — nothing is
+       wider than the screen — so this only kills double-tap-to-zoom, one of
+       the two ways of zooming by accident. Pinch still works, and panning a
+       pinched page still works. */
+    touch-action: manipulation;
     overscroll-behavior-x: none;
     background: var(--ground);
     color: var(--ink);
@@ -210,7 +215,7 @@
   }
   .qa-hint select {
     background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
-    padding: 2px 6px; font-size: 12.5px; color: var(--ink);
+    padding: 1px 6px; font-size: 16px; color: var(--ink);
   }
   .qa-hint .det { font-family: var(--f-mono); font-size: 12px; color: var(--accent); }
   .qa-hint .try-chip, .qa-hint .try-more {
@@ -351,7 +356,10 @@
   .field label { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
   .field input, .field select, .field textarea {
     border: 1px solid var(--line); background: var(--ground); border-radius: 8px; padding: 8px 10px;
-    font-size: 15px; width: 100%; min-width: 0; max-width: 100%;
+    /* 16px is not a taste decision: iOS Safari zooms the whole page when you
+       focus a text control smaller than this, and there is no way back to
+       100% except pinching. Every focusable control here stays at 16. */
+    font-size: 16px; width: 100%; min-width: 0; max-width: 100%;
   }
   /* A date, a time or a count wants about as much room as its content. Run one
      full width and it reads as a broken empty box — especially on iOS, where an
@@ -374,7 +382,7 @@
   .imp-line input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex: 0 0 auto; margin: 0; }
   .imp-line .t { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
   .imp-line.off .t { opacity: .4; text-decoration: line-through; }
-  .imp-line select { flex: 0 0 auto; width: 112px; max-width: 100%; font-size: 12.5px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); }
+  .imp-line select { flex: 0 0 auto; width: 118px; max-width: 100%; font-size: 16px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); }
 
   .settings-group { display: grid; gap: 7px; padding-bottom: 14px; border-bottom: 1px solid var(--line-soft); }
   .settings-group:last-child { border-bottom: 0; padding-bottom: 0; }

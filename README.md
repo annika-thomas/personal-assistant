@@ -187,11 +187,21 @@ you want them; the home screen never becomes a wall.
 
 ## Layout
 
-The page scrolls one way only. `touch-action: pan-y pinch-zoom` on the body
-rules out sideways drags, `overflow-x: clip` on the root catches anything that
-would otherwise widen the page (`clip` rather than `hidden`, which would make
-them a scroll container and break the sticky header), and long unbroken words
-wrap rather than push.
+The page scrolls one way only, and the way to get that is to leave nothing
+wider than the screen: `overflow-x: clip` on the root as a backstop (`clip`
+rather than `hidden`, which would make them a scroll container and break the
+sticky header), long unbroken words wrapping rather than pushing, and
+`min-width: 0` on form controls so a filled date can't force its column open.
+
+Two rules keep iOS from zooming the page by accident, which is its own version
+of being too wide — a zoomed page is cut off on the right:
+
+- **Every focusable text control is at least 16px.** Safari zooms the whole
+  page when you focus anything smaller, and only a pinch gets you back.
+- **`touch-action: manipulation`**, not `pan-y`. `pan-y` blocks sideways drags,
+  but it also blocks panning *while zoomed*, so one accidental zoom left the
+  right-hand edge permanently unreachable. `manipulation` only drops
+  double-tap-to-zoom; pinching and panning a pinched page both still work.
 
 On a phone the eight sections sit in a 4×2 grid rather than a scrolling strip —
 a scrollable row under the input was what let the whole app be dragged
