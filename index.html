@@ -1,4 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Off My Plate</title>
+<meta name="description" content="A calm home for the things you remember at random — errands, appointments, chores, people, projects.">
+<meta name="theme-color" content="#F0F1EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121614" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Off My Plate">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600&display=swap">
@@ -17,12 +30,16 @@
     --accent-soft: #DEEAE3;
     --alert: #A3512B;
     --alert-soft: #F2E3D9;
-    --shadow: 0 1px 2px rgba(28,35,32,.05), 0 10px 24px -18px rgba(28,35,32,.45);
     --btn-ink: #FBFBF8;
+    --shadow: 0 1px 2px rgba(28,35,32,.05), 0 10px 24px -18px rgba(28,35,32,.45);
 
     --f-display: "Fraunces", Georgia, "Times New Roman", serif;
     --f-body: "Public Sans", "Helvetica Neue", Arial, sans-serif;
     --f-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+    color-scheme: light;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -39,8 +56,9 @@
       --accent-soft: #1D2E28;
       --alert: #DE9068;
       --alert-soft: #33231A;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 24px -18px rgba(0,0,0,.8);
       --btn-ink: #0F1512;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 24px -18px rgba(0,0,0,.8);
+      color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
@@ -57,73 +75,65 @@
     --accent-soft: #1D2E28;
     --alert: #DE9068;
     --alert-soft: #33231A;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 24px -18px rgba(0,0,0,.8);
     --btn-ink: #0F1512;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 24px -18px rgba(0,0,0,.8);
+    color-scheme: dark;
   }
 
+  * { box-sizing: border-box; }
   html, body { height: 100%; }
   body {
+    margin: 0;
     background: var(--ground);
     color: var(--ink);
     font-family: var(--f-body);
     font-size: 15px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
   }
-  * { box-sizing: border-box; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
   h1, h2, h3 { margin: 0; font-family: var(--f-display); font-weight: 500; text-wrap: balance; letter-spacing: -.01em; }
   p { margin: 0; }
   button, input, select, textarea { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
   .eyebrow {
-    font-family: var(--f-mono);
-    font-size: 11px;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--ink-3);
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-3);
   }
 
   /* ---------- shell ---------- */
   .shell { display: grid; grid-template-columns: 1fr; min-height: 100%; }
-  @media (min-width: 900px) {
-    .shell { grid-template-columns: 216px minmax(0, 1fr); }
-  }
+  @media (min-width: 900px) { .shell { grid-template-columns: 216px minmax(0, 1fr); } }
 
-  /* ---------- rail (desktop) ---------- */
   .rail { display: none; }
   @media (min-width: 900px) {
     .rail {
-      display: block;
-      border-right: 1px solid var(--line);
-      padding: 28px 16px 40px 24px;
-      position: sticky;
-      top: env(safe-area-inset-top, 0px);
-      align-self: start;
-      max-height: 100dvh;
-      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 22px;
+      border-right: 1px solid var(--line); padding: 28px 16px 28px 24px;
+      position: sticky; top: env(safe-area-inset-top, 0px); align-self: start;
+      max-height: 100dvh; overflow-y: auto;
     }
   }
-  .wordmark { font-family: var(--f-display); font-size: 19px; font-weight: 600; letter-spacing: -.02em; margin-bottom: 26px; display: block; }
+  .wordmark { font-family: var(--f-display); font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
   .wordmark span { color: var(--accent); }
   .rail-nav { display: flex; flex-direction: column; gap: 1px; }
   .rail-nav button {
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
     width: 100%; padding: 7px 10px; border: 0; border-radius: 7px;
-    background: transparent; color: var(--ink-2); cursor: pointer; text-align: left;
-    font-size: 14.5px;
+    background: transparent; color: var(--ink-2); cursor: pointer; text-align: left; font-size: 14.5px;
   }
   .rail-nav button:hover { background: var(--surface-2); color: var(--ink); }
   .rail-nav button[aria-current="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
   .pill {
-    font-family: var(--f-mono); font-size: 11px; line-height: 1.6;
-    padding: 0 6px; border-radius: 20px; background: var(--surface-2); color: var(--ink-2);
-    font-variant-numeric: tabular-nums;
+    font-family: var(--f-mono); font-size: 11px; line-height: 1.6; padding: 0 6px;
+    border-radius: 20px; background: var(--surface-2); color: var(--ink-2); font-variant-numeric: tabular-nums;
   }
   .rail-nav button[aria-current="true"] .pill { background: rgba(255,255,255,.5); color: var(--accent-ink); }
   .pill.hot { background: var(--alert-soft); color: var(--alert); }
 
-  /* ---------- tabs (mobile) ---------- */
   .tabs {
     display: flex; gap: 4px; overflow-x: auto; padding: 0 16px 10px;
     border-bottom: 1px solid var(--line); scrollbar-width: none;
@@ -136,43 +146,40 @@
   .tabs button[aria-current="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
   @media (min-width: 900px) { .tabs { display: none; } }
 
-  /* ---------- main ---------- */
-  .main { min-width: 0; padding: 0 0 72px; }
+  .main { min-width: 0; padding: 0 0 80px; }
   .wrap { max-width: 660px; margin: 0 auto; padding-inline: 16px; }
   @media (min-width: 900px) { .wrap { padding-inline: 32px; } .main { padding-top: 8px; } }
 
   .topbar {
     position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
     background: var(--ground);
-    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    background: color-mix(in srgb, var(--ground) 93%, transparent);
     backdrop-filter: blur(8px);
-    padding-top: 14px;
+    padding-top: 12px;
   }
-  .mobilemark { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-  @media (min-width: 900px) { .mobilemark { display: none; } }
+  .toprow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+  .toprow .wordmark { font-size: 17px; }
+  @media (min-width: 900px) { .toprow .wordmark { display: none; } .toprow { justify-content: flex-end; } }
+  .toptools { display: flex; gap: 2px; }
 
   /* ---------- quick add ---------- */
   .qa { padding-bottom: 12px; }
   .qa-field {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: 11px; padding: 4px 4px 4px 13px; box-shadow: var(--shadow);
+    display: flex; align-items: center; gap: 8px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 11px; padding: 4px 4px 4px 13px; box-shadow: var(--shadow);
   }
   .qa-field:focus-within { border-color: var(--accent); }
-  .qa-field input {
-    flex: 1; min-width: 0; border: 0; background: transparent; padding: 8px 0; font-size: 15.5px;
-  }
+  .qa-field input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 8px 0; font-size: 16px; }
   .qa-field input:focus { outline: none; }
   .qa-field input::placeholder { color: var(--ink-3); }
+
   .btn {
     border: 1px solid transparent; background: var(--accent); color: var(--btn-ink);
     padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;
   }
   .btn:hover { filter: brightness(1.07); }
   .btn:disabled { opacity: .4; cursor: default; filter: none; }
-  .btn-ghost {
-    background: transparent; color: var(--ink-2); border-color: var(--line); font-weight: 500;
-  }
+  .btn-ghost { background: transparent; color: var(--ink-2); border-color: var(--line); font-weight: 500; }
   .btn-ghost:hover { background: var(--surface-2); color: var(--ink); filter: none; }
   .btn-sm { padding: 4px 10px; font-size: 13px; border-radius: 7px; }
 
@@ -186,13 +193,20 @@
     padding: 2px 6px; font-size: 12.5px; color: var(--ink);
   }
   .qa-hint .det { font-family: var(--f-mono); font-size: 12px; color: var(--accent); }
+  .dupes { display: flex; flex-wrap: wrap; gap: 6px; padding: 7px 4px 0; font-size: 12.5px; color: var(--ink-3); align-items: center; }
+  .dupes:empty { padding: 0; }
+  .dupes button {
+    border: 1px solid var(--line); background: transparent; color: var(--ink-2);
+    border-radius: 20px; padding: 2px 9px; font-size: 12.5px; cursor: pointer;
+  }
+  .dupes button:hover { border-color: var(--accent); color: var(--accent-ink); }
 
   /* ---------- page head ---------- */
   .pagehead { padding: 22px 0 6px; }
   .pagehead h1 { font-size: clamp(27px, 6vw, 34px); line-height: 1.12; }
   .pagehead .eyebrow { margin-bottom: 7px; }
   .pagehead .sub { color: var(--ink-2); font-size: 14.5px; margin-top: 7px; }
-  .headrow { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  .headrow { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 
   /* ---------- blocks ---------- */
   .block { margin-top: 26px; }
@@ -206,16 +220,11 @@
   .block-head.alert h2 { color: var(--alert); }
 
   .list { display: flex; flex-direction: column; gap: 1px; }
-
-  .row {
-    display: flex; align-items: flex-start; gap: 11px;
-    padding: 9px 10px; border-radius: 9px; background: transparent;
-  }
+  .row { display: flex; align-items: flex-start; gap: 11px; padding: 9px 10px; border-radius: 9px; }
   .row:hover { background: var(--surface); }
   .row.flag { background: var(--alert-soft); }
-  .row.flag:hover { background: var(--alert-soft); }
   .row-body { flex: 1; min-width: 0; }
-  .row-title { font-size: 15px; line-height: 1.35; }
+  .row-title { font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
   .row.done .row-title { color: var(--ink-3); text-decoration: line-through; }
   .row-sub { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
   .row-sub .when { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
@@ -232,38 +241,32 @@
   }
   .check:hover { border-color: var(--accent); }
   .check svg { opacity: 0; width: 11px; height: 11px; }
-  .check[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); }
+  .check[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--btn-ink); }
   .check[aria-pressed="true"] svg { opacity: 1; }
   .check.square { border-radius: 6px; }
 
   .icon-btn {
     border: 0; background: transparent; color: var(--ink-3); cursor: pointer;
-    padding: 4px; border-radius: 6px; line-height: 0;
+    padding: 6px; border-radius: 7px; line-height: 0;
   }
   .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
   .icon-btn.danger:hover { color: var(--alert); }
+  .icon-btn.glyph { line-height: 1; font-size: 13px; padding: 3px 7px; }
 
   .tag {
     font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase;
     padding: 1px 6px; border-radius: 4px; background: var(--surface-2); color: var(--ink-2);
   }
-  .tag.accent { background: var(--accent-soft); color: var(--accent-ink); }
   .tag.alert { background: var(--alert-soft); color: var(--alert); }
 
-  .card {
-    background: var(--surface); border: 1px solid var(--line-soft);
-    border-radius: 11px; padding: 14px 15px;
-  }
+  .card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: 11px; padding: 14px 15px; }
   .card.nudge { border-left: 3px solid var(--accent); }
+  .card h3 { font-size: 17px; }
+  .card p { color: var(--ink-2); font-size: 14px; }
 
-  .empty {
-    color: var(--ink-2); font-size: 14px; padding: 10px 0 2px;
-  }
-  .clear {
-    text-align: center; padding: 44px 20px; border: 1px dashed var(--line); border-radius: 12px; margin-top: 8px;
-  }
+  .clear { text-align: center; padding: 40px 20px; border: 1px dashed var(--line); border-radius: 12px; margin-top: 12px; }
   .clear h3 { font-size: 21px; margin-bottom: 6px; }
-  .clear p { color: var(--ink-2); font-size: 14px; }
+  .clear p { color: var(--ink-2); font-size: 14px; max-width: 46ch; margin: 0 auto; }
 
   .groupname {
     font-family: var(--f-mono); font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
@@ -271,55 +274,70 @@
   }
   .groupname:first-child { margin-top: 0; }
 
-  .viewbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 2px; }
-
-  /* ---------- onboarding ---------- */
-  .onboard { display: grid; gap: 14px; margin-top: 18px; }
-  .onboard .card { display: grid; gap: 10px; }
-  .onboard h3 { font-size: 17px; }
-  .onboard p { color: var(--ink-2); font-size: 14px; }
   .chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .chip {
     border: 1px solid var(--line); background: var(--ground); color: var(--ink-2);
-    padding: 5px 11px; border-radius: 20px; cursor: pointer; font-size: 13px; text-align: left;
+    padding: 4px 11px; border-radius: 20px; cursor: pointer; font-size: 13px; text-align: left;
   }
   .chip:hover { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+  .chip.best { border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .chip .k { font-family: var(--f-mono); font-size: 11.5px; color: var(--ink-3); }
 
+  .inbox-row { display: block; padding: 11px 10px; border-radius: 9px; }
+  .inbox-row:hover { background: var(--surface); }
+  .inbox-row .row-title { margin-bottom: 8px; }
+  .inbox-top { display: flex; align-items: flex-start; gap: 11px; }
+
   .banner {
-    display: flex; gap: 10px; align-items: baseline; justify-content: space-between; flex-wrap: wrap;
-    background: var(--surface-2); border-radius: 9px; padding: 9px 13px; font-size: 13px; color: var(--ink-2);
-    margin-top: 14px;
+    display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    background: var(--surface-2); border-radius: 9px; padding: 10px 13px; font-size: 13.5px; color: var(--ink-2); margin-top: 16px;
   }
 
-  /* ---------- dialog ---------- */
+  /* ---------- dialogs ---------- */
   dialog {
-    border: 1px solid var(--line); border-radius: 14px; padding: 0; max-width: 460px; width: calc(100% - 32px);
-    background: var(--surface); color: var(--ink); box-shadow: 0 24px 60px -20px rgba(0,0,0,.4);
+    border: 1px solid var(--line); border-radius: 14px; padding: 0; max-width: 520px; width: calc(100% - 28px);
+    background: var(--surface); color: var(--ink); box-shadow: 0 24px 60px -20px rgba(0,0,0,.45);
   }
-  dialog::backdrop { background: rgba(16,22,19,.42); backdrop-filter: blur(2px); }
+  dialog::backdrop { background: rgba(16,22,19,.45); backdrop-filter: blur(2px); }
   .dlg-head { padding: 17px 20px 0; }
   .dlg-head h2 { font-size: 20px; }
-  .dlg-body { padding: 16px 20px; display: grid; gap: 12px; }
+  .dlg-head p { color: var(--ink-2); font-size: 13.5px; margin-top: 5px; }
+  .dlg-body { padding: 16px 20px; display: grid; gap: 12px; max-height: 60vh; overflow-y: auto; }
+  .dlg-foot {
+    display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap;
+    padding: 13px 20px; border-top: 1px solid var(--line-soft); background: var(--ground); border-radius: 0 0 13px 13px;
+  }
+  .dlg-foot .spacer { margin-right: auto; }
   .field { display: grid; gap: 4px; }
   .field label { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
   .field input, .field select, .field textarea {
-    border: 1px solid var(--line); background: var(--ground); border-radius: 8px; padding: 8px 10px; font-size: 14.5px; width: 100%;
+    border: 1px solid var(--line); background: var(--ground); border-radius: 8px; padding: 8px 10px; font-size: 15px; width: 100%;
   }
-  .field textarea { resize: vertical; min-height: 62px; font-family: inherit; }
+  .field textarea { resize: vertical; min-height: 150px; font-family: inherit; line-height: 1.55; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .dlg-foot {
-    display: flex; gap: 8px; justify-content: flex-end; align-items: center;
-    padding: 13px 20px; border-top: 1px solid var(--line-soft); background: var(--ground);
-    border-radius: 0 0 13px 13px;
-  }
-  .dlg-foot .spacer { margin-right: auto; }
+
+  .imp { display: flex; flex-direction: column; gap: 2px; }
+  .imp-line { display: flex; align-items: center; gap: 9px; padding: 5px 6px; border-radius: 7px; cursor: pointer; }
+  .imp-line:hover { background: var(--ground); }
+  .imp-line input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex: 0 0 auto; margin: 0; }
+  .imp-line .t { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+  .imp-line.off .t { opacity: .4; text-decoration: line-through; }
+  .imp-line select { flex: 0 0 auto; width: 116px; font-size: 12.5px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); }
+
+  .settings-group { display: grid; gap: 7px; padding-bottom: 14px; border-bottom: 1px solid var(--line-soft); }
+  .settings-group:last-child { border-bottom: 0; padding-bottom: 0; }
+  .settings-group h3 { font-size: 15px; font-family: var(--f-body); font-weight: 600; }
+  .settings-group p { font-size: 13px; color: var(--ink-2); }
+  .seg { display: flex; gap: 2px; background: var(--ground); border: 1px solid var(--line); border-radius: 8px; padding: 2px; width: fit-content; }
+  .seg button { border: 0; background: transparent; color: var(--ink-2); padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
 
   .toast {
     position: fixed; left: 50%; transform: translateX(-50%);
     bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 60;
     background: var(--ink); color: var(--ground); padding: 9px 16px; border-radius: 20px;
     font-size: 13.5px; box-shadow: var(--shadow); display: flex; gap: 12px; align-items: center;
+    max-width: calc(100% - 32px);
   }
   .toast button { border: 0; background: transparent; color: var(--accent); font-weight: 600; cursor: pointer; font-size: 13.5px; }
   @media (prefers-reduced-motion: no-preference) {
@@ -327,6 +345,8 @@
     @keyframes rise { from { opacity: 0; transform: translate(-50%, 8px); } }
   }
 </style>
+</head>
+<body>
 
 <div class="shell">
   <aside class="rail">
@@ -337,15 +357,27 @@
   <main class="main">
     <div class="topbar">
       <div class="wrap">
-        <div class="mobilemark">
-          <span class="wordmark" style="margin:0;font-size:17px">Off My Plate<span>.</span></span>
+        <div class="toprow">
+          <span class="wordmark">Off My Plate<span>.</span></span>
+          <div class="toptools">
+            <button class="icon-btn" id="btn-find" type="button" aria-label="Search everything" title="Search">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.3" stroke="currentColor" stroke-width="1.5"/><path d="m12.2 12.2 3.1 3.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+            <button class="icon-btn" id="btn-paste" type="button" aria-label="Paste a whole list" title="Paste a list">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.2" y="3.2" width="9.6" height="11.6" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6.8 7h4.4M6.8 9.6h4.4M6.8 12.2h2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </button>
+            <button class="icon-btn" id="btn-settings" type="button" aria-label="Settings and backup" title="Settings">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="2.4" stroke="currentColor" stroke-width="1.5"/><path d="M9 1.9v1.7M9 14.4v1.7M16.1 9h-1.7M3.6 9H1.9m11.1-5-1.2 1.2M6.1 11.9 4.9 13.1m8.2 0-1.2-1.2M6.1 6.1 4.9 4.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+          </div>
         </div>
         <form class="qa" id="qa-form" autocomplete="off">
           <div class="qa-field">
-            <input id="qa-input" type="text" placeholder="Add anything — “buy oat milk”…" aria-label="Quick add">
-            <button class="btn" type="submit" id="qa-submit">Add</button>
+            <input id="qa-input" type="text" placeholder="Anything you just remembered…" aria-label="Add anything">
+            <button class="btn" type="submit">Add</button>
           </div>
           <div class="qa-hint" id="qa-hint"></div>
+          <div class="dupes" id="qa-dupes"></div>
         </form>
       </div>
       <div class="tabs" id="tabs"></div>
@@ -355,15 +387,63 @@
 </div>
 
 <dialog id="editor">
-  <form method="dialog" id="editor-form">
+  <form id="editor-form">
     <div class="dlg-head"><h2 id="editor-title">Edit</h2></div>
     <div class="dlg-body" id="editor-body"></div>
     <div class="dlg-foot">
       <button type="button" class="btn btn-ghost btn-sm spacer" id="editor-delete">Delete</button>
-      <button type="button" class="btn btn-ghost" id="editor-cancel">Cancel</button>
-      <button type="submit" class="btn" id="editor-save">Save</button>
+      <button type="button" class="btn btn-ghost" data-close="editor">Cancel</button>
+      <button type="submit" class="btn">Save</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="importer">
+  <form id="import-form">
+    <div class="dlg-head">
+      <h2 id="import-title">Paste a list</h2>
+      <p id="import-note">One thing per line — straight out of Notes, a text, wherever. Nothing is added until you say so.</p>
+    </div>
+    <div class="dlg-body" id="import-body"></div>
+    <div class="dlg-foot">
+      <button type="button" class="btn btn-ghost btn-sm spacer" id="import-back" hidden>Back</button>
+      <button type="button" class="btn btn-ghost" data-close="importer">Cancel</button>
+      <button type="submit" class="btn" id="import-go">Sort these out</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="settings">
+  <div class="dlg-head"><h2>Settings</h2></div>
+  <div class="dlg-body">
+    <div class="settings-group">
+      <h3>Appearance</h3>
+      <div class="seg" id="theme-seg">
+        <button type="button" data-theme-set="auto">Auto</button>
+        <button type="button" data-theme-set="light">Light</button>
+        <button type="button" data-theme-set="dark">Dark</button>
+      </div>
+    </div>
+    <div class="settings-group">
+      <h3>Your stuff lives in this browser</h3>
+      <p>Nothing is uploaded anywhere. That also means another device won't see it — save a backup file and open it on your laptop or phone to move everything across.</p>
+      <div class="chips">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-export">Save a backup</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-import-file">Open a backup</button>
+        <input type="file" id="file-input" accept="application/json,.json" hidden>
+      </div>
+    </div>
+    <div class="settings-group">
+      <h3>Keep it on your home screen</h3>
+      <p>On iPhone: Share, then Add to Home Screen. On Android or a laptop: the install icon in the address bar. It opens like an app and works with no signal.</p>
+    </div>
+    <div class="settings-group">
+      <h3>Start over</h3>
+      <p>Deletes every item in this browser. Save a backup first if you're not sure.</p>
+      <button type="button" class="btn btn-ghost btn-sm" id="btn-wipe">Delete everything</button>
+    </div>
+  </div>
+  <div class="dlg-foot"><button type="button" class="btn" data-close="settings">Done</button></div>
 </dialog>
 
 <script>
@@ -371,141 +451,99 @@
   "use strict";
 
   /* =====================================================================
-     Collections and shapes
+     Data
      ===================================================================== */
-  const COLLS = ["appointments", "tasks", "buy", "chores", "people", "projects"];
-  const state = { appointments: [], tasks: [], buy: [], chores: [], people: [], projects: [] };
-  let db = null;
-  let dbTried = false;
+  const COLLS = ["inbox", "appointments", "tasks", "buy", "chores", "people", "projects"];
+  const state = { inbox: [], appointments: [], tasks: [], buy: [], chores: [], people: [], projects: [] };
+
+  const STORE_KEY = "offmyplate.v2";
+  const THEME_KEY = "offmyplate.theme";
 
   const BUY_CATEGORIES = [
     ["groceries", "Groceries"], ["household", "Household"],
-    ["gifts", "Gifts"], ["other", "Other"],
+    ["care", "Pharmacy & care"], ["pet", "For the pet"], ["other", "Other"],
   ];
   const CADENCES = [[7, "Weekly"], [14, "Every 2 weeks"], [30, "Monthly"], [60, "Every 2 months"], [90, "Every 3 months"], [180, "Twice a year"]];
 
-  /* =====================================================================
-     Storage — db when granted, localStorage otherwise
-     ===================================================================== */
-  const LS_KEY = "offmyplate.v1";
+  const KIND_LABEL = {
+    inbox: "Inbox", appointments: "Schedule", tasks: "Do", buy: "Buy",
+    chores: "Chores", people: "People", projects: "Projects",
+  };
+  // Where something can be filed by hand. "want" is the Buy list with the
+  // want flag set — a thing you'd like, not a thing you're out of.
+  const DESTS = [
+    ["buy", "Buy"], ["want", "Want"], ["tasks", "Do"], ["appointments", "Book"],
+    ["chores", "Chore"], ["projects", "Project"],
+  ];
 
-  function loadLocal() {
+  function load() {
     try {
-      const raw = localStorage.getItem(LS_KEY);
+      const raw = localStorage.getItem(STORE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
       for (const c of COLLS) if (Array.isArray(parsed[c])) state[c] = parsed[c];
-    } catch (e) { /* private window, blocked storage — start empty */ }
+    } catch (e) { /* blocked or corrupt storage — start empty rather than break */ }
   }
-  function saveLocal() {
-    if (db) return;
-    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
-  }
-
-  function newId() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  }
-
-  function find(coll, id) { return state[coll].find((d) => d.id === id); }
-
-  async function create(coll, data) {
-    const id = newId();
-    const body = Object.assign({ createdAt: new Date().toISOString() }, data);
-    state[coll] = state[coll].concat([Object.assign({ id }, body)]);
-    render(); saveLocal();
-    if (db) {
-      try { await db.doc(coll + "/" + id).set(body); }
-      catch (e) { reportDbError(e); }
+  let saveWarned = false;
+  function save() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    } catch (e) {
+      if (!saveWarned) { saveWarned = true; toast("This browser won't let the app save. Check your privacy settings."); }
     }
-    return id;
   }
 
-  async function patch(coll, id, changes) {
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const find = (coll, id) => state[coll].find((d) => d.id === id);
+
+  function create(coll, data) {
+    const doc = Object.assign({ id: newId(), createdAt: new Date().toISOString() }, data);
+    state[coll] = state[coll].concat([doc]);
+    save(); render();
+    return doc.id;
+  }
+  function patch(coll, id, changes) {
     const doc = find(coll, id);
     if (!doc) return;
     Object.assign(doc, changes);
     state[coll] = state[coll].slice();
-    render(); saveLocal();
-    if (db) {
-      try { await db.doc(coll + "/" + id).update(changes); }
-      catch (e) { reportDbError(e); }
-    }
+    save(); render();
   }
-
-  async function remove(coll, id) {
+  function remove(coll, id) {
     state[coll] = state[coll].filter((d) => d.id !== id);
-    render(); saveLocal();
-    if (db) {
-      try { await db.doc(coll + "/" + id).delete(); }
-      catch (e) { reportDbError(e); }
-    }
-  }
-
-  let dbWarned = false;
-  function reportDbError(e) {
-    const code = e && e.code;
-    if (code === "quota_exceeded") { toast("This list is full. Delete some finished items to add more."); return; }
-    if (dbWarned) return;
-    dbWarned = true;
-    toast("Couldn’t save that change to your other devices.");
-  }
-
-  async function connect() {
-    let ns = null;
-    try { ns = await window.claude?.use?.("db"); } catch (e) { ns = null; }
-    dbTried = true;
-    if (!ns) { render(); return; }
-    db = ns;
-    for (const coll of COLLS) {
-      ns.collection(coll).onSnapshot(
-        (snap) => {
-          state[coll] = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
-          render();
-        },
-        (err) => { if (err.code !== "revoked") reportDbError(err); }
-      );
-    }
-    render();
+    save(); render();
   }
 
   /* =====================================================================
-     Dates — everything local, stored as YYYY-MM-DD / HH:MM
+     Dates — local throughout, stored as YYYY-MM-DD and HH:MM
      ===================================================================== */
   const DAY_MS = 86400000;
   const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const MON_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  function iso(d) {
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-  }
-  function fromISO(s) {
-    const p = String(s).split("-").map(Number);
-    return new Date(p[0], p[1] - 1, p[2]);
-  }
-  function today() { return iso(new Date()); }
+  const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  function fromISO(s) { const p = String(s).split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  const today = () => iso(new Date());
   function shift(s, n) { const d = fromISO(s); d.setDate(d.getDate() + n); return iso(d); }
-  function daysFromToday(s) {
-    if (!s) return null;
-    return Math.round((fromISO(s) - fromISO(today())) / DAY_MS);
-  }
-  function fmtDay(s, opts) {
+  const daysFromToday = (s) => (s ? Math.round((fromISO(s) - fromISO(today())) / DAY_MS) : null);
+  const daysSince = (s) => (s ? Math.max(0, Math.round((fromISO(today()) - fromISO(s)) / DAY_MS)) : null);
+
+  function fmtDay(s, withYear) {
     if (!s) return "";
     const n = daysFromToday(s);
     if (n === 0) return "Today";
     if (n === 1) return "Tomorrow";
     if (n === -1) return "Yesterday";
     const d = fromISO(s);
-    const base = (n > 1 && n < 7 ? DAY_NAMES[d.getDay()] : DAY_NAMES[d.getDay()].slice(0, 3) + " " + MON_NAMES[d.getMonth()] + " " + d.getDate());
-    if (opts && opts.year && d.getFullYear() !== new Date().getFullYear()) return base + ", " + d.getFullYear();
-    return base;
+    const base = n > 1 && n < 7 ? DAY_NAMES[d.getDay()]
+      : DAY_NAMES[d.getDay()].slice(0, 3) + " " + MON_NAMES[d.getMonth()] + " " + d.getDate();
+    return withYear && d.getFullYear() !== new Date().getFullYear() ? base + ", " + d.getFullYear() : base;
   }
   function fmtTime(t) {
     if (!t) return "";
     const p = String(t).split(":").map(Number);
     const h = p[0], m = p[1] || 0;
-    const ap = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 === 0 ? 12 : h % 12;
-    return h12 + (m ? ":" + String(m).padStart(2, "0") : "") + " " + ap;
+    return (h % 12 === 0 ? 12 : h % 12) + (m ? ":" + String(m).padStart(2, "0") : "") + (h >= 12 ? " PM" : " AM");
   }
   function agoLabel(n) {
     if (n === null || n === undefined) return "never";
@@ -516,60 +554,68 @@
     if (n < 60) return Math.round(n / 7) + " weeks ago";
     return Math.round(n / 30) + " months ago";
   }
-  function daysSince(s) {
-    if (!s) return null;
-    return Math.max(0, Math.round((fromISO(today()) - fromISO(s)) / DAY_MS));
+  function everyLabel(n) {
+    if (!n) return "week";
+    if (n === 1) return "day";
+    if (n === 7) return "week";
+    if (n === 14) return "2 weeks";
+    if (n === 30) return "month";
+    if (n === 365) return "year";
+    return n % 7 === 0 ? n / 7 + " weeks" : n + " days";
+  }
+  function cadenceLabel(n) {
+    const hit = CADENCES.find((c) => c[0] === n);
+    return hit ? hit[1] : "every " + everyLabel(n);
   }
 
   /* =====================================================================
-     Quick-add parsing
+     Parsing — turn a scrap of a sentence into something filed
      ===================================================================== */
   const WEEKDAYS = { sun: 0, sunday: 0, mon: 1, monday: 1, tue: 2, tues: 2, tuesday: 2, wed: 3, weds: 3, wednesday: 3, thu: 4, thur: 4, thurs: 4, thursday: 4, fri: 5, friday: 5, sat: 6, saturday: 6 };
   const MONTHS = { jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6, aug: 7, august: 7, sep: 8, sept: 8, september: 8, oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11 };
-  const GROCERY = /\b(milk|oat|eggs?|bread|butter|cheese|yogurt|coffee|tea|sugar|flour|rice|pasta|chicken|beef|fish|salmon|apples?|bananas?|onions?|garlic|lettuce|spinach|tomato|avocado|berries|lemons?|olive oil|snacks?|cereal|beans|salsa|chips|wine|beer|produce|groceries)\b/;
-  const HOUSEHOLD = /\b(paper towels?|toilet paper|detergent|soap|shampoo|toothpaste|sponges?|batteries|light ?bulbs?|trash bags?|dish soap|cleaner|filters?|floss|razors?)\b/;
-  const GIFTS = /\b(gift|present|birthday|card for|anniversary|wedding)\b/;
-  const APPT_WORDS = /\b(appointment|appt|dentist|doctor|dr\.?|haircut|vet|therapy|therapist|checkup|check-up|physical|eye exam|optometrist|dermatologist|meeting|lunch with|dinner with|coffee with|flight|train|interview|class|closing)\b/;
+
+  const KW = {
+    groceries: /\b(milk|eggs?|bread|butter|cheese|yog[hu]rt|coffee|tea|sugar|flour|rice|pasta|noodles?|chicken|beef|pork|fish|salmon|tuna|apples?|bananas?|onions?|garlic|shallots?|lettuce|spinach|kale|tomato(?:es)?|avocados?|berries|lemons?|limes?|olive oil|vinegar|snacks?|cereal|granola|beans|salsa|chips|crackers|wine|beer|seltzer|produce|groceries|sauce|spices?|seasoning|broth|stock|tofu|hummus|nuts|almonds|peanut butter|jam|honey|syrup|ice cream|juice|soda)\b/,
+    household: /\b(paper towels?|toilet paper|napkins?|detergent|dish soap|soap|sponges?|batteries|light ?bulbs?|bulbs?|trash bags?|bin bags?|cleaner|bleach|filters?|wd ?-?40|tape|glue|screws?|nails|hooks?|command strips|candles?|matches|foil|cling film|ziplocs?|mop|broom|extension cord|charger|cable|adapter)\b/,
+    care: /\b(band-?aids?|bandaids?|plasters?|lotion|moisturi[sz]er|sunscreen|spf|vitamins?|supplements?|ibuprofen|advil|tylenol|paracetamol|melatonin|floss|mouthwash|toothpaste|toothbrush|deodorant|razors?|razor heads?|shaving|shampoo|conditioner|benzoyl|peroxide|retinol|serum|tampons?|contacts?|contact solution|chapstick|lip balm|q-?tips|tissues?|hair ?ties?|face wash|body wash)\b/,
+    pet: /\b(cat food|dog food|pet food|litter|kibble|catnip|leash|collar|flea)\b/,
+    want: /\b(shoes?|boots?|sneakers?|trainers?|sandals?|jacket|coat|sweater|jeans|dress|backpack|purse|wallet|watch|headphones?|earbuds|airpods|speakers?|monitor|keyboard|desk|chair|stool|lamp|rug|curtains?|blinds?|mirror|backlights?|rack|shelf|shelves|dresser|mattress|bed frame|luggage|suitcase|camera|lens|bike|skis|snowboard|tent|sleeping bag|kayak|blender|air ?fryer|kettle|espresso|feeders?|frame|poster|plant stand|planter|weights?|yoga mat|projector)\b/,
+  };
+
+  // Verbs that mean "an action I have to take", not "a thing I need to own".
+  const DO_VERBS = /^(change|send|return|cancel|renew|fix|repair|finish|write|pay|email|text|message|sign|submit|file|print|mail|post|reply|respond|update|clean|wash|tidy|organi[sz]e|sort|donate|toss|throw out|unsubscribe|confirm|register|apply|drop off|collect|move|hang|install|charge|back up|ask|tell|remind|find|look up|research|compare|measure|water|feed|empty|refill|defrost|swap|cut|trim|shave|wax|call)\b/i;
+  const BUY_VERBS = /^(buy|get|grab|order|purchase|restock|need|out of|reorder|new)\b/i;
+  const IDEA_STARTS = /^(make my own|learn to|learn how|try |figure out|look into|maybe |what about|could i|should i|would be nice|idea)/i;
+  const APPT_WORDS = /\b(appointment|appt|dentist|dental|doctor|dr\.?|haircut|vet|therapy|therapist|checkup|check-?up|physical|exam|optometrist|dermatologist|cleaning|meeting|lunch with|dinner with|coffee with|drinks with|flight|train|interview|class|closing|inspection|consult)\b/;
 
   function parseQuick(raw) {
-    let text = " " + String(raw).trim() + " ";
-    const cut = [];
-    const eat = (re) => {
-      const m = re.exec(text);
-      if (m) { cut.push(m[0]); text = text.replace(m[0], " "); }
-      return m;
-    };
-
-    let kind = null, date = null, time = null, everyDays = null, cadenceDays = null, status = "booked", where = "";
-
-    // --- explicit prefixes -------------------------------------------------
+    let text = " " + String(raw).trim().replace(/\s+/g, " ") + " ";
+    let kind = null, sure = true, date = null, time = null, everyDays = null,
+      cadenceDays = null, status = "booked", where = "", want = false;
+    const eat = (re) => { const m = re.exec(text); if (m) text = text.replace(m[0], " "); return m; };
     let m;
-    if ((m = /^\s*(chore|chores)\s*:\s*/i.exec(text))) { kind = "chores"; text = text.replace(m[0], " "); }
-    else if ((m = /^\s*(project|proj|idea)\s*:\s*/i.exec(text))) { kind = "projects"; text = text.replace(m[0], " "); }
-    else if ((m = /^\s*(appointment|appt|event)\s*:\s*/i.exec(text))) { kind = "appointments"; text = text.replace(m[0], " "); }
-    else if ((m = /^\s*(task|todo|to-do)\s*:\s*/i.exec(text))) { kind = "tasks"; text = text.replace(m[0], " "); }
-    else if ((m = /^\s*(buy|shopping)\s*:\s*/i.exec(text))) { kind = "buy"; text = text.replace(m[0], " "); }
-    else if ((m = /^\s*(keep in touch with|check in (?:on|with)|catch up with|stay in touch with|reach out to)\s+/i.exec(text))) { kind = "people"; text = text.replace(m[0], " "); }
-    else if ((m = /^\s*(buy|get|pick up|grab|order|restock)\s+/i.exec(text))) { kind = "buy"; text = text.replace(m[0], " "); }
-    else if ((m = /^\s*(book|schedule|set up|make)\s+(?:an?\s+)?(?=.*\b(appointment|appt|dentist|doctor|haircut|vet|exam|checkup|check-up|physical|cleaning|call|visit)\b)/i.exec(text))) {
-      kind = "appointments"; status = "to_book"; text = text.replace(m[0], " ");
-    }
 
-    // --- location ----------------------------------------------------------
+    const questioned = /\?\s*$/.test(text);
+
+    // 1. explicit "kind:" prefixes
+    if (eat(/^\s*chores?\s*:\s*/i)) kind = "chores";
+    else if (eat(/^\s*(?:projects?|proj|idea)\s*:\s*/i)) kind = "projects";
+    else if (eat(/^\s*(?:appointments?|appt|event)\s*:\s*/i)) kind = "appointments";
+    else if (eat(/^\s*(?:tasks?|todo|to-?do|do)\s*:\s*/i)) kind = "tasks";
+    else if (eat(/^\s*(?:buy|shopping)\s*:\s*/i)) kind = "buy";
+    else if (eat(/^\s*(?:wants?|wish ?list)\s*:\s*/i)) { kind = "buy"; want = true; }
+    else if (eat(/^\s*(?:keep in touch with|check in (?:on|with)|catch up with|stay in touch with|reach out to)\s+/i)) kind = "people";
+
+    // 2. location
     if ((m = eat(/\s@\s*([^@]+?)(?=\s{2,}|\s*$)/i))) where = m[1].trim();
 
-    // --- recurrence --------------------------------------------------------
-    if ((m = eat(/\bevery\s+other\s+(day|week|month)\b/i))) {
-      everyDays = { day: 2, week: 14, month: 60 }[m[1].toLowerCase()];
-    } else if ((m = eat(/\bevery\s+(\d+)\s*(day|week|month)s?\b/i))) {
-      everyDays = Number(m[1]) * { day: 1, week: 7, month: 30 }[m[2].toLowerCase()];
-    } else if ((m = eat(/\bevery\s+(day|week|month|morning|night|weekday)\b/i))) {
-      everyDays = { day: 1, morning: 1, night: 1, weekday: 1, week: 7, month: 30 }[m[1].toLowerCase()];
-    } else if ((m = eat(/\b(daily|weekly|biweekly|monthly|quarterly|yearly)\b/i))) {
-      everyDays = { daily: 1, weekly: 7, biweekly: 14, monthly: 30, quarterly: 90, yearly: 365 }[m[1].toLowerCase()];
-    }
+    // 3. recurrence
+    if ((m = eat(/\bevery\s+other\s+(day|week|month)\b/i))) everyDays = { day: 2, week: 14, month: 60 }[m[1].toLowerCase()];
+    else if ((m = eat(/\bevery\s+(\d+)\s*(day|week|month)s?\b/i))) everyDays = Number(m[1]) * { day: 1, week: 7, month: 30 }[m[2].toLowerCase()];
+    else if ((m = eat(/\bevery\s+(day|week|month|morning|night|weekday)\b/i))) everyDays = { day: 1, morning: 1, night: 1, weekday: 1, week: 7, month: 30 }[m[1].toLowerCase()];
+    else if ((m = eat(/\b(daily|weekly|biweekly|monthly|quarterly|yearly)\b/i))) everyDays = { daily: 1, weekly: 7, biweekly: 14, monthly: 30, quarterly: 90, yearly: 365 }[m[1].toLowerCase()];
 
-    // --- time of day -------------------------------------------------------
+    // 4. time of day
     if ((m = eat(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i))) {
       let h = Number(m[1]) % 12;
       if (/pm/i.test(m[3])) h += 12;
@@ -580,18 +626,15 @@
       time = /noon/i.test(m[1]) ? "12:00" : "00:00";
     }
 
-    // --- date --------------------------------------------------------------
+    // 5. date
     if ((m = eat(/\b(today|tonight|this evening)\b/i))) {
       date = today();
       if (!time && /tonight|evening/i.test(m[1])) time = "19:00";
-    } else if ((m = eat(/\b(tomorrow|tmrw|tmw)\b/i))) {
-      date = shift(today(), 1);
-    } else if ((m = eat(/\bin\s+(\d+)\s*(day|week|month)s?\b/i))) {
-      date = shift(today(), Number(m[1]) * { day: 1, week: 7, month: 30 }[m[2].toLowerCase()]);
-    } else if ((m = eat(/\b(?:on\s+|this\s+|next\s+)?(sun|sunday|mon|monday|tue|tues|tuesday|wed|weds|wednesday|thu|thur|thurs|thursday|fri|friday|sat|saturday)\b/i))) {
-      const want = WEEKDAYS[m[1].toLowerCase()];
-      const now = fromISO(today());
-      let delta = (want - now.getDay() + 7) % 7;
+    } else if (eat(/\b(?:tomorrow|tmrw|tmw)\b/i)) date = shift(today(), 1);
+    else if ((m = eat(/\bin\s+(\d+)\s*(day|week|month)s?\b/i))) date = shift(today(), Number(m[1]) * { day: 1, week: 7, month: 30 }[m[2].toLowerCase()]);
+    else if ((m = eat(/\b(?:on\s+|this\s+|next\s+)?(sun|sunday|mon|monday|tue|tues|tuesday|wed|weds|wednesday|thu|thur|thurs|thursday|fri|friday|sat|saturday)\b/i))) {
+      const wantDay = WEEKDAYS[m[1].toLowerCase()];
+      let delta = (wantDay - fromISO(today()).getDay() + 7) % 7;
       if (delta === 0) delta = 7;
       if (/next/i.test(m[0]) && delta < 7) delta += 7;
       date = shift(today(), delta);
@@ -600,104 +643,122 @@
     } else if ((m = eat(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\b/i))) {
       date = pickYear(MONTHS[m[2].toLowerCase()], Number(m[1]));
     } else if ((m = eat(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/))) {
-      if (m[3]) {
-        const y = Number(m[3].length === 2 ? "20" + m[3] : m[3]);
-        date = iso(new Date(y, Number(m[1]) - 1, Number(m[2])));
-      } else {
-        date = pickYear(Number(m[1]) - 1, Number(m[2]));
-      }
-    } else if ((m = eat(/\bnext week\b/i))) {
-      date = shift(today(), 7);
+      if (m[3]) date = iso(new Date(Number(m[3].length === 2 ? "20" + m[3] : m[3]), Number(m[1]) - 1, Number(m[2])));
+      else date = pickYear(Number(m[1]) - 1, Number(m[2]));
+    } else if (eat(/\bnext week\b/i)) date = shift(today(), 7);
+
+    // 6. "schedule / book X" — an appointment that doesn't exist yet.
+    //    "Make my own juice shots" is an idea, so an idea or a question wins.
+    let needsBooking = false;
+    if (!kind && !questioned && !IDEA_STARTS.test(text.trim())) {
+      if (eat(/^\s*(?:schedule|book)\s+(?:an?\s+)?(?:appointment\s+(?:for|to|with)\s+)?/i)) needsBooking = true;
+      else if (eat(/^\s*make\s+an?\s+(?:appointment|booking|reservation)\s*(?:for|to|with)?\s*/i)) needsBooking = true;
     }
 
-    // --- title cleanup -----------------------------------------------------
-    let title = text
-      .replace(/\s+(on|at|by|this|the|for|to)\s*$/i, " ")
-      .replace(/^\s*(on|at|by|this|the)\s+/i, " ")
-      .replace(/\s{2,}/g, " ")
-      .trim()
-      .replace(/[,\-–—]\s*$/, "")
-      .trim();
+    // 7. clean the title up. A dangling "on"/"at" only needs removing when a
+    //    date or time was lifted out of the line; otherwise every word stays,
+    //    or "On cloud shoes" loses its brand.
+    let title = text.replace(/^\s*(?:[-*•‣·–—]|\d+[.)])\s*/, " ");
+    if (date || time) {
+      title = title
+        .replace(/\s+(on|at|by|this|the|for|to)\s*$/i, " ")
+        .replace(/^\s*(on|at|by|this|the)\s+/i, " ");
+    }
+    title = title.replace(/\s{2,}/g, " ").trim().replace(/[,\-–—]\s*$/, "").trim();
     if (title) title = title[0].toUpperCase() + title.slice(1);
 
-    // --- route -------------------------------------------------------------
-    if (!kind) {
-      if (everyDays) kind = "chores";
-      else if (time) kind = "appointments";
-      else if (date && APPT_WORDS.test(" " + title.toLowerCase() + " ")) kind = "appointments";
-      else kind = "tasks";
-    }
-    if (kind === "people") {
-      cadenceDays = everyDays || 14;
-      everyDays = null;
-    }
-    if (kind === "chores" && !everyDays) everyDays = 7;
-    if (kind === "appointments" && !date && status === "booked") status = "to_book";
+    const low = " " + title.toLowerCase() + " ";
+    const words = title.split(/\s+/).filter(Boolean).length;
 
-    const out = { kind, title, date, time, everyDays, cadenceDays, status, where };
-    return out;
+    // 8. route it
+    if (!kind) {
+      if (needsBooking) { kind = "appointments"; status = "to_book"; }
+      else if (everyDays) kind = "chores";
+      else if (questioned || IDEA_STARTS.test(title)) kind = "projects";
+      else if (/^plan\b/i.test(title)) kind = "projects";
+      else if (time || (date && APPT_WORDS.test(low))) kind = "appointments";
+      else if (date) kind = "tasks";
+      else if (BUY_VERBS.test(title)) kind = "buy";
+      else if (DO_VERBS.test(title)) kind = "tasks";
+      else if (KW.want.test(low)) { kind = "buy"; want = true; }
+      else if (KW.groceries.test(low) || KW.household.test(low) || KW.care.test(low) || KW.pet.test(low)) kind = "buy";
+      else {
+        // A bare fragment — "Tv backlights", "Wax nostrils". Don't pretend to
+        // know; park it in the Inbox with a first guess ready to accept.
+        kind = "inbox";
+        sure = false;
+      }
+    }
+
+    if (kind === "buy") {
+      // On a list called Buy, "Buy crispy shallots" is just "Crispy shallots".
+      // "New" stays — it reads as part of the thing, not an instruction.
+      const bare = title.replace(/^(?:buy|get|grab|order|purchase|restock|reorder|pick up|need(?:\s+more)?|out of)\s+(?:some\s+|a\s+|an\s+|more\s+)?/i, "").trim();
+      if (bare) title = bare[0].toUpperCase() + bare.slice(1);
+    }
+    if (kind === "people") { cadenceDays = everyDays || 14; everyDays = null; }
+    if (kind === "chores" && !everyDays) everyDays = 7;
+    if (kind === "appointments" && !date && !time) status = "to_book";
+    if (kind === "projects" && (questioned || IDEA_STARTS.test(title))) status = "someday";
+
+    return {
+      kind: kind, sure: sure, title: title, date: date, time: time, everyDays: everyDays,
+      cadenceDays: cadenceDays, status: status, where: where, want: want,
+      suggest: kind === "inbox" ? (words <= 4 ? "buy" : "tasks") : null,
+    };
   }
 
   function pickYear(monthIdx, day) {
-    const now = new Date();
-    let y = now.getFullYear();
+    let y = new Date().getFullYear();
     let d = new Date(y, monthIdx, day);
-    if ((fromISO(today()) - d) > 120 * DAY_MS) { y += 1; d = new Date(y, monthIdx, day); }
+    if (fromISO(today()) - d > 120 * DAY_MS) { y += 1; d = new Date(y, monthIdx, day); }
     return iso(d);
   }
 
   function buyCategory(title) {
-    const t = " " + title.toLowerCase() + " ";
-    if (GIFTS.test(t)) return "gifts";
-    if (HOUSEHOLD.test(t)) return "household";
-    if (GROCERY.test(t)) return "groceries";
+    const t = " " + String(title).toLowerCase() + " ";
+    if (KW.pet.test(t)) return "pet";
+    if (KW.care.test(t)) return "care";
+    if (KW.household.test(t)) return "household";
+    if (KW.groceries.test(t)) return "groceries";
     return "other";
   }
 
   function docFromParse(p) {
     switch (p.kind) {
-      case "appointments":
-        return { title: p.title, status: p.status, date: p.date || null, time: p.time || null, where: p.where || "", notes: "", done: false };
-      case "tasks":
-        return { title: p.title, due: p.date || null, notes: "", done: false };
-      case "buy":
-        return { title: p.title, category: buyCategory(p.title), notes: "", done: false };
-      case "chores":
-        return { title: p.title, everyDays: p.everyDays || 7, lastDone: null, notes: "" };
-      case "people":
-        return { name: p.title, cadenceDays: p.cadenceDays || 14, lastContact: null, note: "" };
-      case "projects":
-        return { title: p.title, nextStep: "", status: "active", lastTouched: today(), notes: "" };
+      case "inbox": return { title: p.title, suggest: p.suggest || "buy" };
+      case "appointments": return { title: p.title, status: p.status, date: p.date || null, time: p.time || null, where: p.where || "", notes: "", done: false };
+      case "tasks": return { title: p.title, due: p.date || null, notes: "", done: false };
+      case "buy": return { title: p.title, category: buyCategory(p.title), want: !!p.want, notes: "", done: false };
+      case "chores": return { title: p.title, everyDays: p.everyDays || 7, lastDone: null, notes: "" };
+      case "people": return { name: p.title, cadenceDays: p.cadenceDays || 14, lastContact: null, note: "" };
+      default: return { title: p.title, nextStep: "", status: p.status === "someday" ? "someday" : "active", lastTouched: today(), notes: "" };
     }
   }
 
-  const KIND_LABEL = {
-    appointments: "Schedule", tasks: "Tasks", buy: "Buy",
-    chores: "Chores", people: "People", projects: "Projects",
-  };
+  // Put something from the Inbox (or an import line) into a real list.
+  function fileAs(dest, title) {
+    if (dest === "want") return create("buy", { title: title, category: buyCategory(title), want: true, notes: "", done: false });
+    if (dest === "buy") return create("buy", { title: title, category: buyCategory(title), want: false, notes: "", done: false });
+    if (dest === "tasks") return create("tasks", { title: title, due: null, notes: "", done: false });
+    if (dest === "appointments") return create("appointments", { title: title, status: "to_book", date: null, time: null, where: "", notes: "", done: false });
+    if (dest === "chores") return create("chores", { title: title, everyDays: 7, lastDone: today(), notes: "" });
+    if (dest === "projects") return create("projects", { title: title, nextStep: "", status: "active", lastTouched: today(), notes: "" });
+    if (dest === "people") return create("people", { name: title, cadenceDays: 14, lastContact: null, note: "" });
+    return create("inbox", { title: title, suggest: "buy" });
+  }
+  const destLabel = (d) => (d === "people" ? "People" : (DESTS.find((x) => x[0] === d) || ["", "Inbox"])[1]);
 
   /* =====================================================================
-     Derived views
+     Derived
      ===================================================================== */
-  function choreDue(c) {
-    const since = daysSince(c.lastDone);
-    if (since === null) return 0;                // never done — due now
-    return (c.everyDays || 7) - since;           // <= 0 means due
-  }
-  function personDue(p) {
-    const since = daysSince(p.lastContact);
-    if (since === null) return 0;
-    return (p.cadenceDays || 14) - since;
-  }
-  function projectStale(p) {
-    const since = daysSince(p.lastTouched);
-    return since === null ? 999 : since;
-  }
+  const choreDue = (c) => (daysSince(c.lastDone) === null ? 0 : (c.everyDays || 7) - daysSince(c.lastDone));
+  const personDue = (p) => (daysSince(p.lastContact) === null ? 0 : (p.cadenceDays || 14) - daysSince(p.lastContact));
+  const projectStale = (p) => (daysSince(p.lastTouched) === null ? 999 : daysSince(p.lastTouched));
 
   function byDateTime(a, b) {
     const d = String(a.date || "9999").localeCompare(String(b.date || "9999"));
-    if (d !== 0) return d;
-    return String(a.time || "99:99").localeCompare(String(b.time || "99:99"));
+    return d !== 0 ? d : String(a.time || "99:99").localeCompare(String(b.time || "99:99"));
   }
 
   function todayData() {
@@ -709,19 +770,18 @@
       later: appts.filter((a) => a.date > shift(t, 7)).sort(byDateTime),
       missed: appts.filter((a) => a.date < t).sort(byDateTime),
       toBook: state.appointments.filter((a) => a.status === "to_book" && !a.done),
-      dueTasks: state.tasks.filter((x) => !x.done && x.due && x.due <= t)
-        .sort((a, b) => String(a.due).localeCompare(String(b.due))),
-      chores: state.chores.map((c) => Object.assign({ _due: choreDue(c) }, c))
-        .filter((c) => c._due <= 0).sort((a, b) => a._due - b._due),
-      people: state.people.map((p) => Object.assign({ _due: personDue(p) }, p))
-        .filter((p) => p._due <= 0).sort((a, b) => a._due - b._due),
-      stalled: state.projects.filter((p) => (p.status || "active") === "active" && projectStale(p) >= 14)
-        .sort((a, b) => projectStale(b) - projectStale(a)),
+      dueTasks: state.tasks.filter((x) => !x.done && x.due && x.due <= t).sort((a, b) => String(a.due).localeCompare(String(b.due))),
+      chores: state.chores.map((c) => Object.assign({ _due: choreDue(c) }, c)).filter((c) => c._due <= 0).sort((a, b) => a._due - b._due),
+      people: state.people.map((p) => Object.assign({ _due: personDue(p) }, p)).filter((p) => p._due <= 0).sort((a, b) => a._due - b._due),
+      stalled: state.projects.filter((p) => (p.status || "active") === "active" && projectStale(p) >= 14).sort((a, b) => projectStale(b) - projectStale(a)),
     };
   }
 
+  const titleOf = (d) => d.title || d.name || "";
+  const hasAnything = () => COLLS.some((c) => state[c].length > 0);
+
   /* =====================================================================
-     Rendering helpers
+     Markup helpers
      ===================================================================== */
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
@@ -732,150 +792,126 @@
   const TRASH = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5 5 13h6l.5-8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function checkBtn(coll, id, on, square) {
-    return '<button class="check' + (square ? " square" : "") + '" data-act="toggle" data-coll="' + coll + '" data-id="' + id +
+    return '<button type="button" class="check' + (square ? " square" : "") + '" data-act="toggle" data-coll="' + coll + '" data-id="' + id +
       '" aria-pressed="' + (on ? "true" : "false") + '" aria-label="' + (on ? "Mark not done" : "Mark done") + '">' + TICK + "</button>";
+  }
+  function doBtn(act, id, label) {
+    return '<button type="button" class="check" data-act="' + act + '" data-id="' + id + '" aria-pressed="false" aria-label="' + esc(label) + '">' + TICK + "</button>";
   }
   function rowActions(coll, id, extra) {
     return '<div class="row-actions">' + (extra || "") +
-      '<button class="icon-btn" data-act="edit" data-coll="' + coll + '" data-id="' + id + '" aria-label="Edit">' + PENCIL + "</button>" +
-      '<button class="icon-btn danger" data-act="del" data-coll="' + coll + '" data-id="' + id + '" aria-label="Delete">' + TRASH + "</button></div>";
+      '<button type="button" class="icon-btn" data-act="edit" data-coll="' + coll + '" data-id="' + id + '" aria-label="Edit">' + PENCIL + "</button>" +
+      '<button type="button" class="icon-btn danger" data-act="del" data-coll="' + coll + '" data-id="' + id + '" aria-label="Delete">' + TRASH + "</button></div>";
   }
-  function row(opts) {
-    return '<div class="row' + (opts.done ? " done" : "") + (opts.flag ? " flag" : "") + '">' +
-      (opts.lead || "") +
-      '<div class="row-body"><div class="row-title">' + esc(opts.title) + "</div>" +
-      (opts.sub ? '<div class="row-sub">' + opts.sub + "</div>" : "") + "</div>" +
-      (opts.actions || "") + "</div>";
+  function row(o) {
+    return '<div class="row' + (o.done ? " done" : "") + (o.flag ? " flag" : "") + '">' + (o.lead || "") +
+      '<div class="row-body"><div class="row-title">' + esc(o.title) + "</div>" +
+      (o.sub ? '<div class="row-sub">' + o.sub + "</div>" : "") + "</div>" + (o.actions || "") + "</div>";
   }
   function block(title, meta, body, alert) {
     if (!body) return "";
     return '<section class="block"><div class="block-head' + (alert ? " alert" : "") + '"><h2>' + esc(title) + "</h2>" +
       (meta ? '<span class="meta">' + esc(meta) + "</span>" : "") + "</div>" + body + "</section>";
   }
-  function listOf(items, fn) {
-    if (!items.length) return "";
-    return '<div class="list">' + items.map(fn).join("") + "</div>";
+  const listOf = (items, fn) => (items.length ? '<div class="list">' + items.map(fn).join("") + "</div>" : "");
+  function pageHead(eyebrow, title, sub, action) {
+    return '<header class="pagehead"><div class="headrow"><div>' +
+      '<div class="eyebrow">' + esc(eyebrow) + "</div><h1>" + esc(title) + "</h1>" +
+      (sub ? '<p class="sub">' + esc(sub) + "</p>" : "") + "</div>" + (action || "") + "</div></header>";
   }
+  const addBtn = (coll, label) => '<button type="button" class="btn btn-ghost btn-sm" data-act="new" data-coll="' + coll + '">' + esc(label) + "</button>";
+  const emptyView = (t, b) => '<div class="clear"><h3>' + esc(t) + "</h3><p>" + esc(b) + "</p></div>";
 
-  function apptRow(a, opts) {
+  /* =====================================================================
+     Row renderers
+     ===================================================================== */
+  function apptRow(a, flag) {
     const bits = [];
-    if (a.date) bits.push('<span class="when">' + esc(fmtDay(a.date, { year: true })) + (a.time ? " · " + esc(fmtTime(a.time)) : " · all day") + "</span>");
+    if (a.date) bits.push('<span class="when">' + esc(fmtDay(a.date, true)) + (a.time ? " · " + esc(fmtTime(a.time)) : " · all day") + "</span>");
     if (a.where) bits.push(esc(a.where));
-    if (a.date && a.date < today()) bits.push('<span class="late">passed</span>');
+    if (a.date && a.date < today() && !a.done) bits.push('<span class="late">passed</span>');
     if (a.notes) bits.push(esc(a.notes));
-    return row({
-      title: a.title, done: !!a.done,
-      lead: checkBtn("appointments", a.id, !!a.done),
-      sub: bits.join(""),
-      actions: rowActions("appointments", a.id),
-      flag: opts && opts.flag,
-    });
+    return row({ title: a.title, done: !!a.done, flag: flag, lead: checkBtn("appointments", a.id, !!a.done),
+      sub: bits.join(""), actions: rowActions("appointments", a.id) });
   }
   function toBookRow(a) {
     const bits = ['<span class="tag alert">not booked</span>'];
     if (a.where) bits.push(esc(a.where));
     if (a.notes) bits.push(esc(a.notes));
-    return row({
-      title: a.title,
+    return row({ title: a.title,
       lead: '<span class="check" aria-hidden="true" style="border-style:dashed;cursor:default"></span>',
       sub: bits.join(""),
       actions: rowActions("appointments", a.id,
-        '<button class="btn btn-ghost btn-sm" data-act="edit" data-coll="appointments" data-id="' + a.id + '">Pick a date</button>'),
-    });
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="edit" data-coll="appointments" data-id="' + a.id + '">Pick a date</button>') });
   }
-
   function taskRow(t) {
     const bits = [];
     if (t.due) {
-      const n = daysFromToday(t.due);
-      const late = n < 0;
-      bits.push('<span class="when' + (late ? " late" : "") + '">' + (late ? "Due " + esc(fmtDay(t.due)) : esc(fmtDay(t.due, { year: true }))) + "</span>");
+      const late = daysFromToday(t.due) < 0;
+      bits.push('<span class="when' + (late ? " late" : "") + '">' + (late ? "Due " + esc(fmtDay(t.due)) : esc(fmtDay(t.due, true))) + "</span>");
     }
     if (t.notes) bits.push(esc(t.notes));
-    return row({
-      title: t.title, done: !!t.done,
-      lead: checkBtn("tasks", t.id, !!t.done),
-      sub: bits.join(""),
-      actions: rowActions("tasks", t.id),
-    });
+    return row({ title: t.title, done: !!t.done, lead: checkBtn("tasks", t.id, !!t.done),
+      sub: bits.join(""), actions: rowActions("tasks", t.id) });
   }
   function buyRow(b) {
-    return row({
-      title: b.title, done: !!b.done,
-      lead: checkBtn("buy", b.id, !!b.done, true),
-      sub: b.notes ? esc(b.notes) : "",
-      actions: rowActions("buy", b.id),
-    });
+    const bits = [];
+    if (b.want) bits.push('<span class="tag">want</span>');
+    if (b.notes) bits.push(esc(b.notes));
+    return row({ title: b.title, done: !!b.done, lead: checkBtn("buy", b.id, !!b.done, true),
+      sub: bits.join(""),
+      actions: rowActions("buy", b.id,
+        '<button type="button" class="icon-btn glyph" data-act="toggle-want" data-id="' + b.id + '" aria-label="' +
+        (b.want ? "Move to the shopping list" : "Move to the wish list") + '" title="' +
+        (b.want ? "Need this soon" : "Just a want") + '">' + (b.want ? "↑" : "↓") + "</button>") });
   }
   function choreRow(c) {
     const due = c._due !== undefined ? c._due : choreDue(c);
-    const since = daysSince(c.lastDone);
     const bits = ['<span class="when' + (due < 0 ? " late" : "") + '">' +
-      (due > 0 ? "in " + due + (due === 1 ? " day" : " days") : due === 0 ? "due today" : (-due) + (due === -1 ? " day over" : " days over")) + "</span>"];
-    bits.push('<span class="tag">every ' + esc(everyLabel(c.everyDays)) + "</span>");
-    bits.push("last done " + esc(agoLabel(since)));
-    return row({
-      title: c.title,
-      lead: '<button class="check" data-act="chore-done" data-id="' + c.id + '" aria-pressed="false" aria-label="Mark done today">' + TICK + "</button>",
-      sub: bits.join(""),
-      actions: rowActions("chores", c.id),
-    });
+      (due > 0 ? "in " + due + (due === 1 ? " day" : " days") : due === 0 ? "due today" : -due + (due === -1 ? " day over" : " days over")) + "</span>",
+      '<span class="tag">every ' + esc(everyLabel(c.everyDays)) + "</span>",
+      "last done " + esc(agoLabel(daysSince(c.lastDone)))];
+    return row({ title: c.title, lead: doBtn("chore-done", c.id, "Mark done today"),
+      sub: bits.join(""), actions: rowActions("chores", c.id) });
   }
   function personRow(p) {
-    const due = p._due !== undefined ? p._due : personDue(p);
-    const since = daysSince(p.lastContact);
-    const bits = ["last talked " + esc(agoLabel(since)), '<span class="tag">' + esc(cadenceLabel(p.cadenceDays)) + "</span>"];
+    const bits = ["last talked " + esc(agoLabel(daysSince(p.lastContact))), '<span class="tag">' + esc(cadenceLabel(p.cadenceDays)) + "</span>"];
     if (p.note) bits.push(esc(p.note));
-    return row({
-      title: p.name,
-      lead: '<button class="check" data-act="person-touch" data-id="' + p.id + '" aria-pressed="false" aria-label="Mark that you reached out">' + TICK + "</button>",
-      sub: bits.join(""),
-      actions: rowActions("people", p.id),
-      flag: false,
-    });
+    return row({ title: p.name, lead: doBtn("person-touch", p.id, "Mark that you reached out"),
+      sub: bits.join(""), actions: rowActions("people", p.id) });
   }
   function projectRow(p) {
     const stale = projectStale(p);
-    const bits = [];
-    if (p.nextStep) bits.push("Next: " + esc(p.nextStep));
-    else bits.push('<span class="late">no next step yet</span>');
-    bits.push('<span class="when">touched ' + esc(agoLabel(stale === 999 ? null : stale)) + "</span>");
-    return row({
-      title: p.title,
-      lead: '<button class="check" data-act="project-touch" data-id="' + p.id + '" aria-pressed="false" aria-label="Mark worked on today">' + TICK + "</button>",
-      sub: bits.join(""),
-      actions: rowActions("projects", p.id),
-    });
+    const bits = [p.nextStep ? "Next: " + esc(p.nextStep) : '<span class="late">no next step yet</span>',
+      '<span class="when">touched ' + esc(agoLabel(stale === 999 ? null : stale)) + "</span>"];
+    return row({ title: p.title, done: p.status === "done", lead: doBtn("project-touch", p.id, "Mark worked on today"),
+      sub: bits.join(""), actions: rowActions("projects", p.id) });
   }
-  function everyLabel(n) {
-    if (!n) return "week";
-    if (n === 1) return "day";
-    if (n === 7) return "week";
-    if (n === 14) return "2 weeks";
-    if (n === 30) return "month";
-    if (n === 365) return "year";
-    if (n % 7 === 0) return (n / 7) + " weeks";
-    return n + " days";
-  }
-  function cadenceLabel(n) {
-    const hit = CADENCES.find((c) => c[0] === n);
-    return hit ? hit[1] : "every " + everyLabel(n);
+  function inboxRow(item) {
+    const best = item.suggest || "buy";
+    const order = [best].concat(DESTS.map((d) => d[0]).filter((d) => d !== best));
+    return '<div class="inbox-row"><div class="inbox-top"><div class="row-body">' +
+      '<div class="row-title">' + esc(item.title) + "</div>" +
+      '<div class="chips">' + order.map((d, i) =>
+        '<button type="button" class="chip' + (i === 0 ? " best" : "") + '" data-act="file" data-id="' + item.id + '" data-to="' + d + '">' +
+        esc(destLabel(d)) + "</button>").join("") + "</div></div>" +
+      rowActions("inbox", item.id) + "</div></div>";
   }
 
   /* =====================================================================
      Views
      ===================================================================== */
   let view = "today";
+  let query = "";
 
-  const NAV = [
-    ["today", "Today"], ["appointments", "Schedule"], ["tasks", "Tasks"],
-    ["buy", "Buy"], ["chores", "Chores"], ["people", "People"], ["projects", "Projects"],
-  ];
+  const NAV = [["today", "Today"], ["inbox", "Inbox"], ["appointments", "Schedule"], ["tasks", "Do"],
+    ["buy", "Buy"], ["chores", "Chores"], ["people", "People"], ["projects", "Projects"]];
 
   function navCounts() {
     const d = todayData();
     return {
       today: { n: d.now.length + d.dueTasks.length + Math.min(3, d.chores.length), hot: d.dueTasks.some((t) => t.due < today()) },
+      inbox: { n: state.inbox.length, hot: state.inbox.length > 0 },
       appointments: { n: d.now.length + d.week.length + d.toBook.length, hot: d.toBook.length > 0 },
       tasks: { n: state.tasks.filter((t) => !t.done).length, hot: d.dueTasks.length > 0 },
       buy: { n: state.buy.filter((b) => !b.done).length, hot: false },
@@ -887,15 +923,14 @@
 
   function renderNav() {
     const counts = navCounts();
-    const rail = NAV.map(([k, label]) => {
+    document.getElementById("rail").innerHTML = NAV.map(([k, label]) => {
       const c = counts[k];
-      const pill = c && c.n ? '<span class="pill' + (c.hot ? " hot" : "") + '">' + c.n + "</span>" : "";
-      return '<button data-act="nav" data-view="' + k + '" aria-current="' + (view === k) + '">' + esc(label) + pill + "</button>";
+      return '<button type="button" data-act="nav" data-view="' + k + '" aria-current="' + (view === k) + '">' + esc(label) +
+        (c && c.n ? '<span class="pill' + (c.hot ? " hot" : "") + '">' + c.n + "</span>" : "") + "</button>";
     }).join("");
-    document.getElementById("rail").innerHTML = rail;
     document.getElementById("tabs").innerHTML = NAV.map(([k, label]) => {
       const c = counts[k];
-      return '<button data-act="nav" data-view="' + k + '" aria-current="' + (view === k) + '">' + esc(label) +
+      return '<button type="button" data-act="nav" data-view="' + k + '" aria-current="' + (view === k) + '">' + esc(label) +
         (c && c.n ? " " + c.n : "") + "</button>";
     }).join("");
   }
@@ -909,84 +944,77 @@
     return "Winding down";
   }
 
-  function pageHead(eyebrow, title, sub, action) {
-    return '<header class="pagehead"><div class="headrow"><div>' +
-      '<div class="eyebrow">' + esc(eyebrow) + "</div>" +
-      "<h1>" + esc(title) + "</h1>" +
-      (sub ? '<p class="sub">' + sub + "</p>" : "") + "</div>" +
-      (action || "") + "</div></header>";
-  }
-  function addBtn(coll, label) {
-    return '<button class="btn btn-ghost btn-sm" data-act="new" data-coll="' + coll + '">' + esc(label) + "</button>";
-  }
-
   function viewToday() {
     const d = todayData();
     const now = new Date();
     const dateLine = DAY_NAMES[now.getDay()] + ", " + MON_NAMES[now.getMonth()] + " " + now.getDate();
-    const total = d.now.length + d.dueTasks.length + d.chores.length + d.people.length + d.stalled.length + d.missed.length;
+    const load = d.now.length + d.dueTasks.length + d.chores.length + d.people.length + d.stalled.length + d.missed.length;
 
     let sub;
-    if (!hasAnything()) sub = "Everything you need to remember, in one calm place.";
-    else if (total === 0) sub = "Nothing needs you today. The lists are all up to date.";
+    if (!hasAnything()) sub = "Everything you remember at random, in one place.";
+    else if (!load) sub = "Nothing needs you today. The lists are all up to date.";
     else {
       const parts = [];
       if (d.now.length) parts.push(d.now.length + (d.now.length === 1 ? " appointment" : " appointments"));
-      if (d.dueTasks.length) parts.push(d.dueTasks.length + (d.dueTasks.length === 1 ? " task" : " tasks"));
+      if (d.dueTasks.length) parts.push(d.dueTasks.length + (d.dueTasks.length === 1 ? " thing to do" : " things to do"));
       if (d.chores.length) parts.push(Math.min(3, d.chores.length) + " chores");
       sub = parts.length ? parts.join(", ") + " — that's it." : "Just a couple of small things.";
     }
 
     let html = pageHead(dateLine, greeting() + ".", sub);
-
     if (!hasAnything()) return html + onboarding();
 
-    // Missed appointments first — they need a decision.
-    html += block("Slipped past", null, listOf(d.missed, (a) => apptRow(a, { flag: true })), true);
-
-    const nowBody = listOf(d.now, apptRow) + listOf(d.dueTasks.slice(0, 6), taskRow);
-    html += block("Today", d.dueTasks.length > 6 ? (d.dueTasks.length - 6) + " more on Tasks" : null, nowBody);
-
-    // Chores: only ever the top three, with reassurance about the rest.
-    if (d.chores.length) {
-      const pick = d.chores.slice(0, 3);
-      const rest = d.chores.length - pick.length;
-      html += block(
-        "Three chores, that's all",
-        rest > 0 ? rest + " more can wait" : null,
-        listOf(pick, choreRow)
-      );
+    if (state.inbox.length) {
+      html += '<div class="banner" style="margin-top:20px"><span><strong>' + state.inbox.length +
+        (state.inbox.length === 1 ? "</strong> thing" : "</strong> things") + " waiting to be filed.</span>" +
+        '<button type="button" class="btn btn-sm" data-act="nav" data-view="inbox">Sort them</button></div>';
     }
 
+    html += block("Slipped past", null, listOf(d.missed, (a) => apptRow(a, true)), true);
+    html += block("Today", d.dueTasks.length > 6 ? d.dueTasks.length - 6 + " more under Do" : null,
+      listOf(d.now, apptRow) + listOf(d.dueTasks.slice(0, 6), taskRow));
+
+    if (d.chores.length) {
+      html += block("Three chores, that's all", d.chores.length > 3 ? d.chores.length - 3 + " more can wait" : null,
+        listOf(d.chores.slice(0, 3), choreRow));
+    }
     if (d.people.length) {
       html += block("Worth a call", d.people.length > 2 ? d.people.length - 2 + " more" : null, listOf(d.people.slice(0, 2), personRow));
     }
-
     if (d.toBook.length) {
-      html += block("Still need to book", d.toBook.length > 3 ? d.toBook.length - 3 + " more on Schedule" : null,
+      html += block("Still need to book", d.toBook.length > 3 ? d.toBook.length - 3 + " more under Schedule" : null,
         listOf(d.toBook.slice(0, 3), toBookRow));
     }
-
     if (d.stalled.length) {
       const p = d.stalled[0];
       html += block("Picking this back up?", d.stalled.length > 1 ? d.stalled.length - 1 + " others stalled" : null,
-        '<div class="card nudge">' +
-        '<div class="eyebrow">Untouched ' + esc(agoLabel(projectStale(p) === 999 ? null : projectStale(p))) + "</div>" +
-        '<h3 style="margin:5px 0 6px;font-size:18px">' + esc(p.title) + "</h3>" +
-        '<p style="color:var(--ink-2);font-size:14px">' + (p.nextStep ? "Next step: " + esc(p.nextStep) : "No next step written down — that's usually why it stalled.") + "</p>" +
+        '<div class="card nudge"><div class="eyebrow">Untouched ' + esc(agoLabel(projectStale(p) === 999 ? null : projectStale(p))) + "</div>" +
+        '<h3 style="margin:5px 0 6px;font-size:18px">' + esc(p.title) + "</h3><p>" +
+        (p.nextStep ? "Next step: " + esc(p.nextStep) : "No next step written down — that's usually why it stalled.") + "</p>" +
         '<div class="chips" style="margin-top:11px">' +
-        '<button class="btn btn-sm" data-act="project-touch" data-id="' + p.id + '">I worked on it</button>' +
-        '<button class="btn btn-ghost btn-sm" data-act="edit" data-coll="projects" data-id="' + p.id + '">Set the next step</button>' +
-        '<button class="btn btn-ghost btn-sm" data-act="someday" data-id="' + p.id + '">Park it for now</button>' +
-        "</div></div>");
+        '<button type="button" class="btn btn-sm" data-act="project-touch" data-id="' + p.id + '">I worked on it</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="edit" data-coll="projects" data-id="' + p.id + '">Set the next step</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="someday" data-id="' + p.id + '">Park it for now</button></div></div>');
     }
+    html += block("Rest of the week", null, listOf(d.week, apptRow));
+    if (!load) html += '<div class="clear"><h3>You’re clear.</h3><p>Nothing due, nothing overdue, nobody waiting to hear from you.</p></div>';
+    return html;
+  }
 
-    if (d.week.length) {
-      html += block("Rest of the week", null, listOf(d.week, apptRow));
+  function viewInbox() {
+    const n = state.inbox.length;
+    let html = pageHead("Inbox", n ? "Where does this go?" : "Inbox",
+      n ? "Things it wasn't sure about. One tap each and they're filed." : "Nothing waiting. Everything you've added found a home.",
+      '<button type="button" class="btn btn-ghost btn-sm" data-act="paste">Paste a list</button>');
+    if (!n) {
+      return html + emptyView("All clear",
+        "When you type something it can't place — “Tv backlights”, “Wax nostrils” — it lands here instead of guessing wrong.");
     }
-
-    if (total === 0) {
-      html += '<div class="clear"><h3>You’re clear.</h3><p>Nothing due, nothing overdue, nobody waiting to hear from you.</p></div>';
+    html += '<section class="block"><div class="list">' + state.inbox.map(inboxRow).join("") + "</div></section>";
+    const guessBuy = state.inbox.filter((i) => (i.suggest || "buy") === "buy").length;
+    if (guessBuy > 1) {
+      html += '<div class="banner"><span>' + guessBuy + " of these look like things to buy.</span>" +
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="file-all-buy">File them all under Buy</button></div>';
     }
     return html;
   }
@@ -994,16 +1022,17 @@
   function viewAppointments() {
     const d = todayData();
     let html = pageHead("Schedule", "What's coming up", null, addBtn("appointments", "+ Add"));
-    if (d.toBook.length) {
-      html += block("Need to book", "make the call, then add the date", listOf(d.toBook, toBookRow), true);
-    }
-    html += block("Slipped past", null, listOf(d.missed, (a) => apptRow(a, { flag: true })), true);
+    html += block("Need to book", "make the call, then add the date", listOf(d.toBook, toBookRow), true);
+    html += block("Slipped past", null, listOf(d.missed, (a) => apptRow(a, true)), true);
     html += block("Today", null, listOf(d.now, apptRow));
     html += block("Next 7 days", null, listOf(d.week, apptRow));
     html += block("Later", null, listOf(d.later, apptRow));
     const done = state.appointments.filter((a) => a.done);
     html += block("Been and gone", done.length + " kept", listOf(done.slice(-8).reverse(), apptRow));
-    if (!state.appointments.length) html += emptyView("Nothing on the calendar", "Try “dentist tues 2pm” or “book eye exam” in the box above.");
+    if (!state.appointments.length) {
+      html += emptyView("Nothing on the calendar",
+        "Try “dentist tues 2pm”, or “schedule teeth cleaning” for one you still have to book.");
+    }
     return html;
   }
 
@@ -1014,50 +1043,54 @@
     const overdue = open.filter((x) => x.due && x.due < t).sort((a, b) => a.due.localeCompare(b.due));
     const soon = open.filter((x) => x.due && x.due >= t && x.due <= shift(t, 7)).sort((a, b) => a.due.localeCompare(b.due));
     const later = open.filter((x) => x.due && x.due > shift(t, 7)).sort((a, b) => a.due.localeCompare(b.due));
-    const undated = open.filter((x) => !x.due);
 
-    let html = pageHead("Tasks", "One-off things", open.length ? open.length + " open" : null, addBtn("tasks", "+ Add"));
+    let html = pageHead("Do", "Things to get done", open.length ? open.length + " open" : null, addBtn("tasks", "+ Add"));
     html += block("Overdue", null, listOf(overdue, taskRow), true);
     html += block("This week", null, listOf(soon, taskRow));
     html += block("Later", null, listOf(later, taskRow));
-    html += block("No date", "whenever you get to them", listOf(undated, taskRow));
+    html += block("No date", "whenever you get to them", listOf(open.filter((x) => !x.due), taskRow));
     html += block("Done", done.length + " finished", listOf(done.slice(-10).reverse(), taskRow));
-    if (!state.tasks.length) html += emptyView("No tasks yet", "Type something like “renew registration friday” above.");
+    if (!state.tasks.length) html += emptyView("Nothing to do", "Try “renew registration friday” or “change address”.");
     return html;
   }
 
   function viewBuy() {
     const open = state.buy.filter((b) => !b.done);
+    const need = open.filter((b) => !b.want);
+    const wants = open.filter((b) => b.want);
     const done = state.buy.filter((b) => b.done);
-    let html = pageHead("Buy", "Shopping list", open.length ? open.length + " to pick up" : null,
-      (done.length ? '<button class="btn btn-ghost btn-sm" data-act="clear-bought">Clear ' + done.length + " bought</button>" : "") + " " + addBtn("buy", "+ Add"));
+    let html = pageHead("Buy", "Shopping and wanting",
+      open.length ? need.length + " to pick up, " + wants.length + " on the wish list" : null,
+      (done.length ? '<button type="button" class="btn btn-ghost btn-sm" data-act="clear-bought">Clear ' + done.length + " bought</button> " : "") + addBtn("buy", "+ Add"));
+
     let body = "";
     for (const [key, label] of BUY_CATEGORIES) {
-      const items = open.filter((b) => (b.category || "other") === key);
-      if (!items.length) continue;
-      body += '<div class="groupname">' + esc(label) + "</div>" + listOf(items, buyRow);
+      const items = need.filter((b) => (b.category || "other") === key);
+      if (items.length) body += '<div class="groupname">' + esc(label) + "</div>" + listOf(items, buyRow);
     }
-    if (body) html += '<section class="block">' + body + "</section>";
+    html += block("Pick up soon", null, body);
+    html += block("Want, eventually", "no rush on any of these", listOf(wants, buyRow));
     html += block("In the cart", null, listOf(done, buyRow));
-    if (!state.buy.length) html += emptyView("List is empty", "Type “buy oat milk” above — it sorts itself into the right aisle.");
+    if (!state.buy.length) {
+      html += emptyView("List is empty",
+        "Try “buy crispy shallots”, or just “razor heads” — it sorts itself into the right aisle.");
+    }
     return html;
   }
 
   function viewChores() {
     const all = state.chores.map((c) => Object.assign({ _due: choreDue(c) }, c)).sort((a, b) => a._due - b._due);
     const due = all.filter((c) => c._due <= 0);
-    const upcoming = all.filter((c) => c._due > 0);
-    let html = pageHead("Chores", "The recurring stuff", due.length
-      ? due.length + " due — Today only ever shows you three of them."
-      : "Nothing due. The house can wait.", addBtn("chores", "+ Add"));
+    let html = pageHead("Chores", "The recurring stuff",
+      due.length ? due.length + " due — Today only ever shows you three of them." : "Nothing due. The house can wait.",
+      addBtn("chores", "+ Add"));
     html += block("Due now", due.length > 3 ? "Today shows the top 3" : null, listOf(due, choreRow), due.length > 5);
-    html += block("Coming up", null, listOf(upcoming, choreRow));
+    html += block("Coming up", null, listOf(all.filter((c) => c._due > 0), choreRow));
     if (!state.chores.length) {
-      html += '<div class="card" style="margin-top:20px"><h3 style="font-size:17px">Start with the usual suspects</h3>' +
-        '<p style="color:var(--ink-2);font-size:14px;margin:6px 0 12px">Tap any that apply. You can change how often later.</p>' +
-        '<div class="chips">' + CHORE_PRESETS.map((c, i) =>
-          '<button class="chip" data-act="preset-chore" data-i="' + i + '">' + esc(c[0]) + ' <span class="k">' + esc(everyLabel(c[1])) + "</span></button>").join("") +
-        "</div></div>";
+      html += '<div class="card" style="margin-top:20px"><h3>Start with the usual suspects</h3>' +
+        '<p style="margin:6px 0 12px">Tap any that apply. You can change how often later.</p><div class="chips">' +
+        CHORE_PRESETS.map((c, i) => '<button type="button" class="chip" data-act="preset-chore" data-i="' + i + '">' + esc(c[0]) +
+          ' <span class="k">' + esc(everyLabel(c[1])) + "</span></button>").join("") + "</div></div>";
     }
     return html;
   }
@@ -1065,117 +1098,78 @@
   function viewPeople() {
     const all = state.people.map((p) => Object.assign({ _due: personDue(p) }, p)).sort((a, b) => a._due - b._due);
     const due = all.filter((p) => p._due <= 0);
-    const ok = all.filter((p) => p._due > 0);
-    let html = pageHead("People", "Keeping in touch", due.length
-      ? due.length + (due.length === 1 ? " person you meant to call" : " people you meant to call")
-      : "Everyone's heard from you recently.", addBtn("people", "+ Add"));
+    let html = pageHead("People", "Keeping in touch",
+      due.length ? due.length + (due.length === 1 ? " person you meant to call" : " people you meant to call") : "Everyone's heard from you recently.",
+      addBtn("people", "+ Add"));
     html += block("Overdue a call", null, listOf(due, personRow), due.length > 0);
-    html += block("All good for now", null, listOf(ok, personRow));
+    html += block("All good for now", null, listOf(all.filter((p) => p._due > 0), personRow));
     if (!state.people.length) {
       html += emptyView("Nobody on the list yet",
-        "Add the people you want to stay close to and how often — “keep in touch with Mom every 2 weeks”. You'll get a nudge, not a guilt trip.");
+        "Add who you want to stay close to and how often — “keep in touch with Grandma every 2 weeks”. It nudges, it doesn't nag.");
     }
     return html;
   }
 
   function viewProjects() {
     const active = state.projects.filter((p) => (p.status || "active") === "active").sort((a, b) => projectStale(b) - projectStale(a));
-    const someday = state.projects.filter((p) => p.status === "someday");
-    const finished = state.projects.filter((p) => p.status === "done");
     const stalled = active.filter((p) => projectStale(p) >= 14);
-    let html = pageHead("Projects", "Things you want to do", active.length
-      ? active.length + " going" + (stalled.length ? ", " + stalled.length + " stalled" : "")
-      : null, addBtn("projects", "+ Add"));
+    let html = pageHead("Projects", "Bigger things and half-ideas",
+      active.length ? active.length + " going" + (stalled.length ? ", " + stalled.length + " stalled" : "") : null,
+      addBtn("projects", "+ Add"));
     html += block("Stalled", "two weeks or more", listOf(stalled, projectRow), true);
     html += block("Moving", null, listOf(active.filter((p) => projectStale(p) < 14), projectRow));
-    html += block("Someday", "parked on purpose", listOf(someday, projectRow));
-    html += block("Finished", null, listOf(finished, projectRow));
+    html += block("Someday and maybe", "ideas, parked on purpose", listOf(state.projects.filter((p) => p.status === "someday"), projectRow));
+    html += block("Finished", null, listOf(state.projects.filter((p) => p.status === "done"), projectRow));
     if (!state.projects.length) {
       html += emptyView("No projects yet",
-        "These are the bigger things — build shelves, plan a trip, learn to sew. Give each one a next step and nothing stalls in silence.");
+        "The bigger things — “plan desk setup”, “make my own juice shots”. Anything you end with a question mark lands here as an idea.");
     }
     return html;
   }
 
-  function emptyView(title, body) {
-    return '<div class="clear"><h3>' + esc(title) + "</h3><p>" + esc(body) + "</p></div>";
+  function viewFind() {
+    let html = pageHead("Search", "Find anything", "Every list at once — buy, do, schedule, chores, people, projects, inbox.");
+    html += '<div class="block"><div class="field"><label for="find-input">Search</label>' +
+      '<input id="find-input" type="search" placeholder="bandaids, dentist, Grandma…" value="' + esc(query) + '"></div></div>';
+    const q = query.trim().toLowerCase();
+    if (!q) return html + emptyView("Type to search", "It looks through everything you've ever put in, including things already done.");
+
+    const RENDER = { inbox: inboxRow, appointments: apptRow, tasks: taskRow, buy: buyRow, chores: choreRow, people: personRow, projects: projectRow };
+    let found = 0, body = "";
+    for (const coll of COLLS) {
+      const hits = state[coll].filter((d) =>
+        [titleOf(d), d.notes, d.note, d.nextStep, d.where].filter(Boolean).join(" ").toLowerCase().includes(q));
+      if (!hits.length) continue;
+      found += hits.length;
+      body += block(KIND_LABEL[coll], hits.length + (hits.length === 1 ? " match" : " matches"), listOf(hits, RENDER[coll]));
+    }
+    return html + (found ? body : emptyView("Nothing matches “" + query + "”", "Try a shorter word, or add it using the box at the top."));
   }
 
   /* =====================================================================
      Onboarding
      ===================================================================== */
-  const CHORE_PRESETS = [
-    ["Laundry", 7], ["Change the sheets", 14], ["Water the plants", 4], ["Take out recycling", 7],
-    ["Clean the bathroom", 14], ["Vacuum", 7], ["Grocery run", 7], ["Wipe down the kitchen", 3],
-  ];
+  const CHORE_PRESETS = [["Laundry", 7], ["Change the sheets", 14], ["Water the plants", 4], ["Take out recycling", 7],
+    ["Clean the bathroom", 14], ["Vacuum", 7], ["Wipe down the kitchen", 3], ["Grocery run", 7]];
 
-  const EXAMPLES = [
-    "dentist tues 2pm", "buy oat milk", "book eye exam",
-    "chore: laundry every week", "keep in touch with Grandma every 2 weeks",
-    "project: build the shelves", "renew registration friday",
-  ];
-
-  const SAMPLE = {
-    appointments: [
-      { title: "Dentist cleaning", status: "booked", date: shift(today(), 2), time: "14:00", where: "Dr. Pham, 4th St", notes: "", done: false },
-      { title: "Haircut", status: "booked", date: shift(today(), 6), time: "10:30", where: "", notes: "", done: false },
-      { title: "Eye exam", status: "to_book", date: null, time: null, where: "", notes: "Prescription runs out in November", done: false },
-    ],
-    tasks: [
-      { title: "Renew car registration", due: shift(today(), -1), notes: "", done: false },
-      { title: "Return the library books", due: today(), notes: "", done: false },
-      { title: "Find a plumber for the slow drain", due: null, notes: "", done: false },
-    ],
-    buy: [
-      { title: "Oat milk", category: "groceries", notes: "", done: false },
-      { title: "Coffee", category: "groceries", notes: "", done: false },
-      { title: "Paper towels", category: "household", notes: "", done: false },
-      { title: "Birthday card for Dad", category: "gifts", notes: "", done: false },
-    ],
-    chores: [
-      { title: "Laundry", everyDays: 7, lastDone: shift(today(), -9), notes: "" },
-      { title: "Water the plants", everyDays: 4, lastDone: shift(today(), -5), notes: "" },
-      { title: "Change the sheets", everyDays: 14, lastDone: shift(today(), -16), notes: "" },
-      { title: "Vacuum", everyDays: 7, lastDone: shift(today(), -3), notes: "" },
-    ],
-    people: [
-      { name: "Mom", cadenceDays: 7, lastContact: shift(today(), -11), note: "" },
-      { name: "Grandma", cadenceDays: 14, lastContact: shift(today(), -20), note: "Landline, mornings are best" },
-      { name: "Sam", cadenceDays: 30, lastContact: shift(today(), -12), note: "" },
-    ],
-    projects: [
-      { title: "Build the hallway shelves", nextStep: "Measure the alcove", status: "active", lastTouched: shift(today(), -23), notes: "" },
-      { title: "Plan the spring trip", nextStep: "Pick dates with Sam", status: "active", lastTouched: shift(today(), -3), notes: "" },
-    ],
-  };
-
-  function hasAnything() {
-    return COLLS.some((c) => state[c].length > 0);
-  }
-  function hasSample() {
-    return COLLS.some((c) => state[c].some((d) => d.sample));
-  }
+  const EXAMPLES = ["dentist tues 2pm", "razor heads", "schedule teeth cleaning", "buy crispy shallots",
+    "chore: laundry every week", "keep in touch with Grandma every 2 weeks", "plan desk setup", "clean teeth myself?"];
 
   function onboarding() {
-    return '<div class="onboard">' +
-      '<div class="card"><h3>Everything goes in the one box.</h3>' +
-      "<p>Type it the way you'd say it. It works out whether it's an appointment, an errand, a chore or a project, and shows you where it's headed before you hit add. Tap one to try:</p>" +
-      '<div class="chips">' + EXAMPLES.map((e, i) =>
-        '<button class="chip" data-act="try" data-i="' + i + '">' + esc(e) + "</button>").join("") + "</div></div>" +
-      '<div class="card"><h3>Or look around first.</h3>' +
-      "<p>Load a made-up week — a few appointments, a shopping list, some overdue chores — to see how it all fits together. It's clearly marked and you can wipe it in one tap.</p>" +
-      '<div class="chips"><button class="btn btn-sm" data-act="seed">Load the example week</button></div></div>' +
-      (dbTried && !db ? '<div class="banner"><span>Saving to this browser only — your other devices won\'t see these.</span></div>' : "") +
-      "</div>";
+    return '<div class="block" style="display:grid;gap:14px;margin-top:18px">' +
+      '<div class="card"><h3>Dump it here, sort it later.</h3>' +
+      '<p style="margin:6px 0 11px">Type the way you’d scribble in Notes. It works out what each thing is — something to buy, an appointment to book, a chore, an idea — and shows you where it’s going before you hit add. Anything it can’t place goes to the Inbox rather than somewhere wrong. Tap one to try:</p>' +
+      '<div class="chips">' + EXAMPLES.map((e, i) => '<button type="button" class="chip" data-act="try" data-i="' + i + '">' + esc(e) + "</button>").join("") + "</div></div>" +
+      '<div class="card"><h3>Already got a list somewhere?</h3>' +
+      '<p style="margin:6px 0 11px">Copy it straight out of Notes and paste the whole thing — one line each. You get to check where every line is headed before anything is added.</p>' +
+      '<div class="chips"><button type="button" class="btn btn-sm" data-act="paste">Paste my list</button></div></div></div>';
   }
 
   /* =====================================================================
      Render
      ===================================================================== */
-  const VIEWS = {
-    today: viewToday, appointments: viewAppointments, tasks: viewTasks,
-    buy: viewBuy, chores: viewChores, people: viewPeople, projects: viewProjects,
-  };
+  const VIEWS = { today: viewToday, inbox: viewInbox, appointments: viewAppointments, tasks: viewTasks,
+    buy: viewBuy, chores: viewChores, people: viewPeople, projects: viewProjects, find: viewFind };
 
   let raf = null;
   function render() {
@@ -1183,15 +1177,11 @@
     raf = requestAnimationFrame(() => {
       raf = null;
       renderNav();
-      let html = (VIEWS[view] || viewToday)();
-      if (hasSample()) {
-        html += '<div class="banner"><span>Some of this is example data, not yours.</span>' +
-          '<button class="btn btn-ghost btn-sm" data-act="clear-sample">Clear the examples</button></div>';
+      document.getElementById("view").innerHTML = (VIEWS[view] || viewToday)();
+      if (view === "find") {
+        const el = document.getElementById("find-input");
+        if (el && document.activeElement !== el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
       }
-      if (dbTried && !db && hasAnything()) {
-        html += '<div class="banner"><span>Saving to this browser only — your other devices won’t see these.</span></div>';
-      }
-      document.getElementById("view").innerHTML = html;
     });
   }
 
@@ -1200,133 +1190,237 @@
      ===================================================================== */
   const qaInput = document.getElementById("qa-input");
   const qaHint = document.getElementById("qa-hint");
-  const qaForm = document.getElementById("qa-form");
+  const qaDupes = document.getElementById("qa-dupes");
   let override = null;
 
-  function describeParse(p) {
+  function describeParse(p, kind) {
     const bits = [];
-    if (p.kind === "appointments") {
-      if (p.status === "to_book") bits.push("to book");
-      else if (p.date) bits.push(fmtDay(p.date, { year: true }) + (p.time ? " at " + fmtTime(p.time) : ", all day"));
-    } else if (p.kind === "tasks" && p.date) bits.push("due " + fmtDay(p.date, { year: true }));
-    else if (p.kind === "chores") bits.push("every " + everyLabel(p.everyDays));
-    else if (p.kind === "people") bits.push(cadenceLabel(p.cadenceDays).toLowerCase());
-    else if (p.kind === "buy") bits.push(BUY_CATEGORIES.find((c) => c[0] === buyCategory(p.title))[1].toLowerCase());
+    if (kind === "inbox") return "you'll pick where";
+    if (kind === "appointments") {
+      if (p.status === "to_book" || !p.date) bits.push("to book");
+      else bits.push(fmtDay(p.date, true) + (p.time ? " at " + fmtTime(p.time) : ", all day"));
+    } else if (kind === "tasks" && p.date) bits.push("due " + fmtDay(p.date, true));
+    else if (kind === "chores") bits.push("every " + everyLabel(p.everyDays || 7));
+    else if (kind === "people") bits.push(cadenceLabel(p.cadenceDays || 14).toLowerCase());
+    else if (kind === "buy") bits.push(p.want ? "wish list" : (BUY_CATEGORIES.find((c) => c[0] === buyCategory(p.title)) || ["", "other"])[1].toLowerCase());
+    else if (kind === "projects") bits.push(p.status === "someday" ? "an idea for someday" : "a project");
     if (p.where) bits.push("at " + p.where);
     return bits.join(" · ");
   }
 
+  function matchesFor(q) {
+    const needle = q.trim().toLowerCase();
+    if (needle.length < 3) return [];
+    const out = [];
+    for (const coll of COLLS) {
+      for (const d of state[coll]) {
+        if (d.done) continue;
+        if (titleOf(d).toLowerCase().includes(needle)) out.push({ coll: coll, doc: d });
+        if (out.length >= 3) return out;
+      }
+    }
+    return out;
+  }
+
   function updateHint() {
     const raw = qaInput.value.trim();
-    if (!raw) { qaHint.innerHTML = ""; return; }
+    if (!raw) { qaHint.innerHTML = ""; qaDupes.innerHTML = ""; return; }
     const p = parseQuick(raw);
     const kind = override || p.kind;
-    const detail = describeParse(Object.assign({}, p, { kind }));
-    qaHint.innerHTML = "<span>Goes to</span>" +
-      '<select id="qa-kind" aria-label="Where this goes">' +
-      NAV.slice(1).map(([k]) => '<option value="' + k + '"' + (k === kind ? " selected" : "") + ">" + esc(KIND_LABEL[k]) + "</option>").join("") +
+    const detail = describeParse(p, kind);
+    const opts = [["inbox", "Inbox"]].concat(NAV.slice(2).map(([k]) => [k, KIND_LABEL[k]]));
+    qaHint.innerHTML = "<span>Goes to</span><select id=\"qa-kind\" aria-label=\"Where this goes\">" +
+      opts.map(([k, l]) => '<option value="' + k + '"' + (k === kind ? " selected" : "") + ">" + esc(l) + "</option>").join("") +
       "</select>" + (detail ? '<span class="det">' + esc(detail) + "</span>" : "");
-    const sel = document.getElementById("qa-kind");
-    sel.addEventListener("change", () => { override = sel.value; updateHint(); });
+    document.getElementById("qa-kind").addEventListener("change", (e) => { override = e.target.value; updateHint(); });
+
+    const hits = matchesFor(raw);
+    qaDupes.innerHTML = hits.length
+      ? "<span>Already on your list:</span>" + hits.map((h) =>
+        '<button type="button" data-act="nav" data-view="' + h.coll + '">' + esc(titleOf(h.doc)) + " · " + esc(KIND_LABEL[h.coll]) + "</button>").join("")
+      : "";
   }
 
   qaInput.addEventListener("input", () => { override = null; updateHint(); });
-  qaForm.addEventListener("submit", (e) => {
+  qaInput.addEventListener("paste", (e) => {
+    const text = (e.clipboardData || window.clipboardData).getData("text");
+    if (text && /\r|\n/.test(text.trim())) { e.preventDefault(); openImporter(text); }
+  });
+  document.getElementById("qa-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const raw = qaInput.value.trim();
     if (!raw) return;
     const p = parseQuick(raw);
     if (override) p.kind = override;
     if (!p.title) { toast("Give it a name and I'll file it."); return; }
-    const doc = docFromParse(p);
-    create(p.kind, doc);
-    toast("Added to " + KIND_LABEL[p.kind]);
+    create(p.kind, docFromParse(p));
+    toast(p.kind === "inbox" ? "Parked in the Inbox — tell it where that goes" : "Added to " + KIND_LABEL[p.kind]);
     qaInput.value = "";
     override = null;
     updateHint();
   });
 
   /* =====================================================================
-     Editor dialog
+     Importer — paste a whole list, check it, then commit
+     ===================================================================== */
+  const impDlg = document.getElementById("importer");
+  const impBody = document.getElementById("import-body");
+  const impNote = document.getElementById("import-note");
+  const impGo = document.getElementById("import-go");
+  const impBack = document.getElementById("import-back");
+  let impLines = null;
+
+  function openImporter(prefill) {
+    impLines = null;
+    document.getElementById("import-title").textContent = "Paste a list";
+    impNote.textContent = "One thing per line — straight out of Notes, a text, wherever. Nothing is added until you say so.";
+    impGo.textContent = "Sort these out";
+    impBack.hidden = true;
+    impBody.innerHTML = '<div class="field"><label for="import-text">Your list</label>' +
+      '<textarea id="import-text" placeholder="Nice bandaids&#10;Wd40 for front door&#10;Schedule teeth cleaning&#10;Hiking boots"></textarea></div>';
+    if (prefill) document.getElementById("import-text").value = prefill.trim();
+    if (!impDlg.open) impDlg.showModal();
+    document.getElementById("import-text").focus();
+  }
+
+  function showImportReview(text) {
+    const lines = text.split(/\r?\n/)
+      .map((l) => l.replace(/^\s*(?:[-*•‣·–—□☐✓✔]|\d+[.)])\s*/, "").trim())
+      .filter((l) => l.length > 0)
+      .slice(0, 300);
+    if (!lines.length) { toast("Nothing to import — paste a list first."); return; }
+
+    impLines = lines.map((line) => {
+      const p = parseQuick(line);
+      let dest = p.kind === "inbox" ? p.suggest || "buy" : p.kind;
+      if (p.kind === "buy" && p.want) dest = "want";
+      return { raw: line, title: p.title || line, dest: dest, on: true, parse: p };
+    });
+
+    const counts = {};
+    for (const l of impLines) counts[l.dest] = (counts[l.dest] || 0) + 1;
+    const summary = Object.keys(counts).sort((a, b) => counts[b] - counts[a])
+      .map((d) => counts[d] + " " + destLabel(d).toLowerCase()).join(", ");
+
+    document.getElementById("import-title").textContent = "Where everything's going";
+    impNote.textContent = lines.length + " lines. Change any that look wrong, untick anything you don't want.";
+    impGo.textContent = "Add " + lines.length + (lines.length === 1 ? " thing" : " things");
+    impBack.hidden = false;
+    const opts = DESTS.concat([["people", "Person"]]);
+    impBody.innerHTML = '<p style="font-size:13px;color:var(--ink-2)">' + esc(summary) + '</p><div class="imp">' +
+      impLines.map((l, i) =>
+        '<label class="imp-line" for="imp-' + i + '"><input type="checkbox" id="imp-' + i + '" data-imp="' + i + '" checked>' +
+        '<span class="t">' + esc(l.title) + "</span>" +
+        '<select data-impdest="' + i + '" aria-label="Where this goes">' +
+        opts.map(([v, lab]) => '<option value="' + v + '"' + (v === l.dest ? " selected" : "") + ">" + esc(lab) + "</option>").join("") +
+        "</select></label>").join("") + "</div>";
+  }
+
+  impBody.addEventListener("change", (e) => {
+    if (!impLines) return;
+    const box = e.target.closest("[data-imp]");
+    if (box) {
+      const i = Number(box.dataset.imp);
+      impLines[i].on = box.checked;
+      box.closest(".imp-line").classList.toggle("off", !box.checked);
+      const on = impLines.filter((l) => l.on).length;
+      impGo.textContent = on ? "Add " + on + (on === 1 ? " thing" : " things") : "Nothing ticked";
+      return;
+    }
+    const sel = e.target.closest("[data-impdest]");
+    if (sel) impLines[Number(sel.dataset.impdest)].dest = sel.value;
+  });
+
+  impBack.addEventListener("click", () => openImporter(impLines ? impLines.map((l) => l.raw).join("\n") : ""));
+
+  document.getElementById("import-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!impLines) {
+      const el = document.getElementById("import-text");
+      showImportReview(el ? el.value : "");
+      return;
+    }
+    const picked = impLines.filter((l) => l.on);
+    if (!picked.length) { toast("Nothing ticked."); return; }
+    for (const l of picked) {
+      // Keep the parsed detail (dates, cadence) when the destination is the
+      // one the parser picked; otherwise file it plainly under the override.
+      if (l.dest === l.parse.kind && l.dest !== "inbox") create(l.dest, docFromParse(l.parse));
+      else fileAs(l.dest, l.title);
+    }
+    impDlg.close();
+    impLines = null;
+    view = "today";
+    render();
+    toast("Added " + picked.length + (picked.length === 1 ? " thing" : " things"));
+  });
+
+  /* =====================================================================
+     Editor
      ===================================================================== */
   const SCHEMA = {
+    inbox: { title: "Note", fields: [{ k: "title", label: "What", type: "text", required: true }], blank: { title: "", suggest: "buy" } },
     appointments: {
       title: "Appointment",
-      fields: [
-        { k: "title", label: "What", type: "text", required: true },
+      fields: [{ k: "title", label: "What", type: "text", required: true },
         { k: "status", label: "Status", type: "select", options: [["booked", "Booked"], ["to_book", "Still need to book"]] },
-        { k: "date", label: "Date", type: "date", half: true },
-        { k: "time", label: "Time", type: "time", half: true },
-        { k: "where", label: "Where", type: "text" },
-        { k: "notes", label: "Notes", type: "textarea" },
-      ],
+        { k: "date", label: "Date", type: "date", half: true }, { k: "time", label: "Time", type: "time", half: true },
+        { k: "where", label: "Where", type: "text" }, { k: "notes", label: "Notes", type: "textarea" }],
       blank: { title: "", status: "booked", date: today(), time: "", where: "", notes: "", done: false },
     },
     tasks: {
       title: "Task",
-      fields: [
-        { k: "title", label: "What", type: "text", required: true },
-        { k: "due", label: "Due", type: "date" },
-        { k: "notes", label: "Notes", type: "textarea" },
-      ],
+      fields: [{ k: "title", label: "What", type: "text", required: true }, { k: "due", label: "Due", type: "date" },
+        { k: "notes", label: "Notes", type: "textarea" }],
       blank: { title: "", due: null, notes: "", done: false },
     },
     buy: {
       title: "Shopping item",
-      fields: [
-        { k: "title", label: "Item", type: "text", required: true },
-        { k: "category", label: "Aisle", type: "select", options: BUY_CATEGORIES },
-        { k: "notes", label: "Notes", type: "textarea" },
-      ],
-      blank: { title: "", category: "groceries", notes: "", done: false },
+      fields: [{ k: "title", label: "Item", type: "text", required: true },
+        { k: "category", label: "Aisle", type: "select", options: BUY_CATEGORIES, half: true },
+        { k: "want", label: "Urgency", type: "select", options: [["", "Need soon"], ["1", "Just a want"]], bool: true, half: true },
+        { k: "notes", label: "Notes", type: "textarea" }],
+      blank: { title: "", category: "groceries", want: false, notes: "", done: false },
     },
     chores: {
       title: "Chore",
-      fields: [
-        { k: "title", label: "Chore", type: "text", required: true },
+      fields: [{ k: "title", label: "Chore", type: "text", required: true },
         { k: "everyDays", label: "How often (days)", type: "number", half: true },
-        { k: "lastDone", label: "Last done", type: "date", half: true },
-        { k: "notes", label: "Notes", type: "textarea" },
-      ],
+        { k: "lastDone", label: "Last done", type: "date", half: true }, { k: "notes", label: "Notes", type: "textarea" }],
       blank: { title: "", everyDays: 7, lastDone: today(), notes: "" },
     },
     people: {
       title: "Person",
-      fields: [
-        { k: "name", label: "Who", type: "text", required: true },
+      fields: [{ k: "name", label: "Who", type: "text", required: true },
         { k: "cadenceDays", label: "Reach out", type: "select", options: CADENCES, numeric: true, half: true },
         { k: "lastContact", label: "Last talked", type: "date", half: true },
-        { k: "note", label: "Note to self", type: "textarea" },
-      ],
+        { k: "note", label: "Note to self", type: "textarea" }],
       blank: { name: "", cadenceDays: 14, lastContact: today(), note: "" },
     },
     projects: {
       title: "Project",
-      fields: [
-        { k: "title", label: "Project", type: "text", required: true },
+      fields: [{ k: "title", label: "Project", type: "text", required: true },
         { k: "nextStep", label: "Next step", type: "text" },
         { k: "status", label: "Status", type: "select", options: [["active", "Going"], ["someday", "Someday"], ["done", "Finished"]], half: true },
         { k: "lastTouched", label: "Last worked on", type: "date", half: true },
-        { k: "notes", label: "Notes", type: "textarea" },
-      ],
+        { k: "notes", label: "Notes", type: "textarea" }],
       blank: { title: "", nextStep: "", status: "active", lastTouched: today(), notes: "" },
     },
   };
 
   const dlg = document.getElementById("editor");
   const dlgBody = document.getElementById("editor-body");
-  const dlgTitle = document.getElementById("editor-title");
-  const dlgDelete = document.getElementById("editor-delete");
-  let editing = null; // {coll, id|null}
+  let editing = null;
 
   function fieldHtml(f, val) {
     const id = "f-" + f.k;
     let control;
     if (f.type === "select") {
+      const cur = f.bool ? (val ? "1" : "") : String(val == null ? "" : val);
       control = '<select id="' + id + '" name="' + f.k + '">' + f.options.map((o) =>
-        '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(val) ? " selected" : "") + ">" + esc(o[1]) + "</option>").join("") + "</select>";
+        '<option value="' + esc(o[0]) + '"' + (String(o[0]) === cur ? " selected" : "") + ">" + esc(o[1]) + "</option>").join("") + "</select>";
     } else if (f.type === "textarea") {
-      control = '<textarea id="' + id + '" name="' + f.k + '">' + esc(val || "") + "</textarea>";
+      control = '<textarea id="' + id + '" name="' + f.k + '" style="min-height:62px">' + esc(val || "") + "</textarea>";
     } else {
       control = '<input id="' + id + '" name="' + f.k + '" type="' + f.type + '" value="' + esc(val == null ? "" : val) + '"' +
         (f.type === "number" ? ' min="1" step="1"' : "") + (f.required ? " required" : "") + ">";
@@ -1341,21 +1435,16 @@
     if (id && !doc) return;
     const data = doc || spec.blank;
     editing = { coll: coll, id: id || null };
-    dlgTitle.textContent = (id ? "Edit " : "New ") + spec.title.toLowerCase();
-    let html = "", buffer = [];
-    const flush = () => {
-      if (!buffer.length) return;
-      html += buffer.length === 2 ? '<div class="field-row">' + buffer.join("") + "</div>" : buffer.join("");
-      buffer = [];
-    };
+    document.getElementById("editor-title").textContent = (id ? "Edit " : "New ") + spec.title.toLowerCase();
+    let html = "", buf = [];
+    const flush = () => { if (buf.length) { html += buf.length === 2 ? '<div class="field-row">' + buf.join("") + "</div>" : buf.join(""); buf = []; } };
     for (const f of spec.fields) {
       const cell = fieldHtml(f, data[f.k]);
-      if (f.half) { buffer.push(cell); if (buffer.length === 2) flush(); }
-      else { flush(); html += cell; }
+      if (f.half) { buf.push(cell); if (buf.length === 2) flush(); } else { flush(); html += cell; }
     }
     flush();
     dlgBody.innerHTML = html;
-    dlgDelete.style.display = id ? "" : "none";
+    document.getElementById("editor-delete").hidden = !id;
     dlg.showModal();
     const first = dlgBody.querySelector("input, select, textarea");
     if (first) first.focus();
@@ -1370,22 +1459,24 @@
       const el = dlgBody.querySelector('[name="' + f.k + '"]');
       if (!el) continue;
       let v = el.value;
-      if (f.type === "number" || f.numeric) v = Number(v) || spec.blank[f.k];
-      if ((f.type === "date" || f.type === "time") && !v) v = null;
+      if (f.bool) v = !!v;
+      else if (f.type === "number" || f.numeric) v = Number(v) || spec.blank[f.k];
+      else if ((f.type === "date" || f.type === "time") && !v) v = null;
       out[f.k] = v;
     }
     const nameKey = spec.fields[0].k;
     if (!String(out[nameKey] || "").trim()) { toast("It needs a name."); return; }
-    if (editing.coll === "appointments" && out.status === "booked" && !out.date) out.status = "to_book";
-    if (editing.coll === "appointments" && out.date && out.status === "to_book") out.status = "booked";
+    if (editing.coll === "appointments") {
+      if (out.status === "booked" && !out.date) out.status = "to_book";
+      if (out.date && out.status === "to_book") out.status = "booked";
+    }
     if (editing.id) patch(editing.coll, editing.id, out);
     else create(editing.coll, Object.assign({}, spec.blank, out));
     dlg.close();
     editing = null;
   });
-  document.getElementById("editor-cancel").addEventListener("click", () => { dlg.close(); editing = null; });
-  dlgDelete.addEventListener("click", () => {
-    if (editing && editing.id) { const e = editing; dlg.close(); editing = null; askDelete(e.coll, e.id); }
+  document.getElementById("editor-delete").addEventListener("click", () => {
+    if (editing && editing.id) { const cur = editing; dlg.close(); editing = null; askDelete(cur.coll, cur.id); }
   });
 
   /* =====================================================================
@@ -1400,14 +1491,15 @@
     toastEl.appendChild(document.createTextNode(msg));
     if (undo) {
       const b = document.createElement("button");
+      b.type = "button";
       b.textContent = "Undo";
-      b.addEventListener("click", () => { undo(); toastEl.remove(); toastEl = null; });
+      b.addEventListener("click", () => { undo(); if (toastEl) toastEl.remove(); toastEl = null; });
       toastEl.appendChild(b);
     }
     document.body.appendChild(toastEl);
     clearTimeout(toastTimer);
     const el = toastEl;
-    toastTimer = setTimeout(() => { if (el === toastEl) { el.remove(); toastEl = null; } }, undo ? 6000 : 2600);
+    toastTimer = setTimeout(() => { if (el === toastEl) { el.remove(); toastEl = null; } }, undo ? 6500 : 2600);
   }
 
   function askDelete(coll, id) {
@@ -1415,12 +1507,9 @@
     if (!doc) return;
     const copy = Object.assign({}, doc);
     remove(coll, id);
-    toast("Deleted “" + (doc.title || doc.name || "item") + "”", () => {
-      const body = Object.assign({}, copy);
-      delete body.id;
+    toast("Deleted “" + titleOf(doc) + "”", () => {
       state[coll] = state[coll].concat([copy]);
-      render(); saveLocal();
-      if (db) db.doc(coll + "/" + copy.id).set(body).catch(reportDbError);
+      save(); render();
     });
   }
 
@@ -1428,45 +1517,53 @@
      Actions
      ===================================================================== */
   document.body.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-act]");
+    const btn = e.target.closest("[data-act], [data-close], [data-theme-set]");
     if (!btn) return;
-    const act = btn.dataset.act;
-    const coll = btn.dataset.coll;
-    const id = btn.dataset.id;
 
-    if (act === "nav") {
-      view = btn.dataset.view;
-      render();
-      window.scrollTo({ top: 0, behavior: "auto" });
-      return;
-    }
+    if (btn.dataset.close) { document.getElementById(btn.dataset.close).close(); editing = null; return; }
+    if (btn.dataset.themeSet) { setTheme(btn.dataset.themeSet); return; }
+
+    const act = btn.dataset.act, coll = btn.dataset.coll, id = btn.dataset.id;
+
+    if (act === "nav") { view = btn.dataset.view; render(); window.scrollTo(0, 0); return; }
     if (act === "toggle") {
       const doc = find(coll, id);
-      if (!doc) return;
-      patch(coll, id, { done: !doc.done, doneAt: !doc.done ? today() : null });
+      if (doc) patch(coll, id, { done: !doc.done, doneAt: !doc.done ? today() : null });
       return;
     }
+    if (act === "toggle-want") { const b = find("buy", id); if (b) patch("buy", id, { want: !b.want }); return; }
     if (act === "edit") { openEditor(coll, id); return; }
     if (act === "new") { openEditor(coll, null); return; }
     if (act === "del") { askDelete(coll, id); return; }
+    if (act === "paste") { openImporter(""); return; }
+    if (act === "file") {
+      const item = find("inbox", id);
+      if (!item) return;
+      fileAs(btn.dataset.to, item.title);
+      remove("inbox", id);
+      toast("Filed under " + destLabel(btn.dataset.to));
+      return;
+    }
+    if (act === "file-all-buy") {
+      const items = state.inbox.filter((i) => (i.suggest || "buy") === "buy");
+      for (const i of items) { fileAs("buy", i.title); remove("inbox", i.id); }
+      toast(items.length + " moved to Buy");
+      return;
+    }
     if (act === "chore-done") {
       const c = find("chores", id);
       patch("chores", id, { lastDone: today() });
-      toast("“" + (c ? c.title : "Chore") + "” done — back in " + everyLabel(c && c.everyDays));
+      if (c) toast("“" + c.title + "” done — back in " + everyLabel(c.everyDays));
       return;
     }
     if (act === "person-touch") {
       const p = find("people", id);
       patch("people", id, { lastContact: today() });
-      toast("Logged. " + (p ? p.name : "They") + " is off the list for now.");
+      if (p) toast("Logged. " + p.name + " is off the list for now.");
       return;
     }
-    if (act === "project-touch") {
-      patch("projects", id, { lastTouched: today() });
-      toast("Nice — clock reset on that one.");
-      return;
-    }
-    if (act === "someday") { patch("projects", id, { status: "someday" }); toast("Parked. It'll wait in Someday."); return; }
+    if (act === "project-touch") { patch("projects", id, { lastTouched: today() }); toast("Nice — clock reset on that one."); return; }
+    if (act === "someday") { patch("projects", id, { status: "someday" }); toast("Parked. It'll wait under Someday."); return; }
     if (act === "clear-bought") {
       const done = state.buy.filter((b) => b.done);
       for (const b of done) remove("buy", b.id);
@@ -1485,27 +1582,115 @@
       create("chores", { title: p[0], everyDays: p[1], lastDone: today(), notes: "" });
       return;
     }
-    if (act === "seed") { seedSample(); return; }
-    if (act === "clear-sample") {
-      for (const c of COLLS) for (const d of state[c].filter((x) => x.sample)) remove(c, d.id);
-      toast("Examples cleared — the lists are yours now.");
-      return;
-    }
   });
 
-  async function seedSample() {
-    for (const coll of COLLS) {
-      for (const doc of SAMPLE[coll]) await create(coll, Object.assign({ sample: true }, doc));
-    }
-    toast("Example week loaded");
+  document.getElementById("view").addEventListener("input", (e) => {
+    if (e.target.id === "find-input") { query = e.target.value; render(); }
+  });
+
+  document.getElementById("btn-find").addEventListener("click", () => {
+    view = view === "find" ? "today" : "find";
+    render();
+    window.scrollTo(0, 0);
+  });
+  document.getElementById("btn-paste").addEventListener("click", () => openImporter(""));
+  document.getElementById("btn-settings").addEventListener("click", () => {
+    markTheme();
+    document.getElementById("settings").showModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "/" && document.activeElement === document.body) { e.preventDefault(); qaInput.focus(); }
+  });
+
+  /* =====================================================================
+     Theme, backup, offline
+     ===================================================================== */
+  function setTheme(mode) {
+    try { localStorage.setItem(THEME_KEY, mode); } catch (err) { /* ignore */ }
+    if (mode === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", mode);
+    markTheme();
   }
+  function markTheme() {
+    let mode = "auto";
+    try { mode = localStorage.getItem(THEME_KEY) || "auto"; } catch (err) { /* ignore */ }
+    for (const b of document.querySelectorAll("[data-theme-set]")) {
+      b.setAttribute("aria-pressed", String(b.dataset.themeSet === mode));
+    }
+  }
+
+  document.getElementById("btn-export").addEventListener("click", () => {
+    const payload = { app: "off-my-plate", version: 2, exportedAt: new Date().toISOString() };
+    for (const c of COLLS) payload[c] = state[c];
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "off-my-plate-" + today() + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast("Backup saved");
+  });
+
+  const fileInput = document.getElementById("file-input");
+  document.getElementById("btn-import-file").addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try { parsed = JSON.parse(String(reader.result)); }
+      catch (err) { toast("That file isn't a backup this app can read."); return; }
+      let added = 0;
+      for (const c of COLLS) {
+        if (!Array.isArray(parsed[c])) continue;
+        const seen = new Set(state[c].map((d) => d.id));
+        for (const d of parsed[c]) {
+          if (!d || typeof d !== "object") continue;
+          const doc = Object.assign({}, d);
+          if (!doc.id || seen.has(doc.id)) doc.id = newId();
+          seen.add(doc.id);
+          state[c] = state[c].concat([doc]);
+          added++;
+        }
+      }
+      save(); render();
+      toast(added ? "Restored " + added + " things" : "Nothing in that backup to add");
+    };
+    reader.readAsText(file);
+    fileInput.value = "";
+  });
+
+  document.getElementById("btn-wipe").addEventListener("click", () => {
+    if (!window.confirm("Delete every item in this browser? This can't be undone.")) return;
+    for (const c of COLLS) state[c] = [];
+    save(); render();
+    document.getElementById("settings").close();
+    toast("All clear. Starting fresh.");
+  });
 
   /* =====================================================================
      Boot
      ===================================================================== */
-  loadLocal();
+  (function initTheme() {
+    let mode = "auto";
+    try { mode = localStorage.getItem(THEME_KEY) || "auto"; } catch (err) { /* ignore */ }
+    if (mode !== "auto") document.documentElement.setAttribute("data-theme", mode);
+  })();
+
+  load();
   render();
-  connect();
   updateHint();
+
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => { /* offline support is a bonus, not a requirement */ });
+    });
+  }
 })();
 </script>
+</body>
+</html>

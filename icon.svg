@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Off My Plate">
+  <rect width="512" height="512" rx="112" fill="#2E6B58"/>
+  <circle cx="256" cy="262" r="132" fill="none" stroke="#F0F1EC" stroke-width="22"/>
+  <path d="M256 322V196" stroke="#F0F1EC" stroke-width="22" stroke-linecap="round"/>
+  <path d="M256 236c0-34-26-60-60-60 0 34 26 60 60 60Z" fill="#F0F1EC"/>
+  <path d="M256 284c0-34 26-60 60-60 0 34-26 60-60 60Z" fill="#F0F1EC"/>
+</svg>
