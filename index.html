@@ -348,6 +348,13 @@
   .field input, .field select, .field textarea {
     border: 1px solid var(--line); background: var(--ground); border-radius: 8px; padding: 8px 10px; font-size: 15px; width: 100%;
   }
+  /* A date, a time or a count wants about as much room as its content. Run one
+     full width and it reads as a broken empty box — especially on iOS, where an
+     unset date renders completely blank. */
+  .field input[type="date"] { max-width: 200px; }
+  .field input[type="time"] { max-width: 150px; }
+  .field input[type="number"] { max-width: 130px; }
+  .field select { max-width: 320px; }
   .field textarea { resize: vertical; min-height: 150px; font-family: inherit; line-height: 1.55; }
   .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 12px; }
 
